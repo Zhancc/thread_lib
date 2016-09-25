@@ -8,6 +8,8 @@
 
 typedef struct cond {
   /* fill this in */
+	mutex_t cmutex;
+
 } cond_t;
 
 #endif /* _COND_TYPE_H */

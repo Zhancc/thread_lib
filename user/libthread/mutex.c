@@ -1,5 +1,5 @@
 /* the implementation assumes some memory consistency model */
-
+#include <syscall.h>
 #include <mutex.h>
 #include <mutex_internals.h>
 int mutex_init( mutex_t *mp ){

@@ -4,10 +4,13 @@
 
 #ifndef _SEM_TYPE_H
 #define _SEM_TYPE_H
-
+#include <cond_type.h>
 
 typedef struct sem {
   /* fill this in */
+	int cnt;
+	cond_t cv;
+	mutex_t cv_mutex;
 } sem_t;
 
 #endif /* _SEM_TYPE_H */
