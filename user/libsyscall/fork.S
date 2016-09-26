@@ -1,6 +1,6 @@
 /**
- *  @file vanish.S
- *  @brief Wrapper for void vanish(void)
+ *  @file fork.S
+ *  @brief Wrapper for int fork(void)
  *
  *  @author X.D. Zhai (xingdaz)
  *  @bug None known.
@@ -8,11 +8,11 @@
 
 #include <syscall_int.h>
 
-.global vanish
+.global fork
 
-vanish:
+fork:
   PUSH  %ebp
   MOV   %esp,%ebp     /* Setup preamble */
-  INT   $VANISH_INT   /* Trap into kernel's vanish */
+  INT   $FORK_INT     /* Trap into kernel's fork */
   POP   %ebp          /* Restore %ebp */
-  RET                 /* Return */
+  RET                 /* Return w/ %eax unchanged */

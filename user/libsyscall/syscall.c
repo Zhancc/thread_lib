@@ -22,21 +22,6 @@
 
 #include <syscall.h>
 
-int fork(void)
-{
-	return -1;
-}
-
-int exec(char *execname, char *argvec[])
-{
-	return -1;
-}
-
-int wait(int *status_ptr)
-{
-	return -1;
-}
-
 int yield(int pid)
 {
 	return -1;
