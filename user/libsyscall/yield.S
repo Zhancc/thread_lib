@@ -1,6 +1,6 @@
 /**
- *  @file task_vanish.S
- *  @brief Wrapper for void task_vanish(int status)
+ *  @file yield.S
+ *  @brief Wrapper for int yield(int tid)
  *
  *  @author X.D. Zhai (xingdaz)
  *  @bug None known.
@@ -8,15 +8,14 @@
 
 #include <syscall_int.h>
 
-.global task_vanish
+.global yield
 
-task_vanish:
+yield:
   PUSH  %ebp       
   MOV   %esp,%ebp         /* Setup preamble */
   PUSH  %esi              /* Callee saved register */
-  MOV   0x8(%ebp),%esi    /* Move status into %esi */
-  INT   $TASK_VANISH_INT  /* Trap into kernel's task_vanish */
+  MOV   0x8(%ebp),%esi    /* Move tid into %esi */
+  INT   $YIELD_INT        /* Trap into kernel's yield */
   POP   %esi              /* Restore %esi */
   POP   %ebp              /* Restore %ebp */
   RET                     /* Return to caller */
-

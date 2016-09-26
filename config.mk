@@ -70,7 +70,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory
 #
-STUDENTTESTS = virgin lifecycle_test
+STUDENTTESTS = virgin life_cycle_test thread_management_test
 
 ###########################################################################
 # Object files for your thread library
@@ -89,7 +89,8 @@ THREAD_OBJS = malloc.o panic.o
 # Object files for your syscall wrappers
 ###########################################################################
 SYSCALL_OBJS = syscall.o fork.o exec.o set_status.o vanish.o wait.o \
-							 print.o gettid.o
+							 task_vanish.o gettid.o yield.o deschedule.o make_runnable.o \
+							 get_ticks.o sleep.o swexn.o print.o 
 
 ###########################################################################
 # Object files for your automatic stack handling

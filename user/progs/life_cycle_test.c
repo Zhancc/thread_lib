@@ -1,7 +1,7 @@
 /** 
- * @file user/progs/lifecycle_test.c
+ * @file user/progs/life_cycle_test.c
  * @author X.D. Zhai (xingdaz)
- * @brief Test on fork(), exec(), set_status(), vanish(), and wait().
+ * @brief Wrapper tests for fork, exec, set_status, vanish, wait and task_vanish.
  *
  * Parent forks a child and wait on the child to exit.
  */
@@ -23,7 +23,7 @@ main(int argc, char *argv[])
 
 
   lprintf("Parent -- Prefork\n");
-  if (task_id = fork()) {
+  if ((task_id = fork())) {
     /* In parent */
     lprintf("Parent -- Forked a child w/ tid = %d\n", task_id);
     if ((child_thread_id = wait(&child_exit_status)) < 0)
@@ -42,5 +42,5 @@ main(int argc, char *argv[])
       vanish();
     }
   }
-  return 0;
+  task_vanish(69);
 }
