@@ -34,14 +34,15 @@ void cond_wait( cond_t *cv, mutex_t *mp){
 	mutex_lock(mp);
 }
 
-#define dequeue(queue_ptr) (LIST_ENTRY(list_remv_head(queue_ptr), waiting, list_entry))
 
 void cond_signal(cond_t *cv ){
 	struct waiting *s;
+	list *entry;
 	mutex_lock(&cv->cmutex);
-	s = dequeue(&cv->queue);
+	entry = list_remv_head(&cv->queue);
 	mutex_unlock(&cv->cmutex);
-	if(s){
+	if(entry){
+	  s = LIST_ENTRY(entry, waiting, list_entry);
 	  s->indicator = 1;
 	  make_runnable(s->tid);
 	}
@@ -49,10 +50,14 @@ void cond_signal(cond_t *cv ){
 
 void cond_broadcast( cond_t *cv ){
 	struct waiting *s;
+	list *entry;
 	mutex_lock(&cv->cmutex);
-	for(s = dequeue(&cv->queue); !s; s = dequeue(&cv->queue)){
+	entry = list_remv_head(&cv->queue);
+	for(s = LIST_ENTRY(entry, waiting, list_entry); !entry; ){
 	  s->indicator = 1;
-	  make_runnable(s->tid);		
+	  make_runnable(s->tid);
+	  entry = list_remv_head(&cv->queue);
+	  s = LIST_ENTRY(entry, waiting, list_entry);
 	}
 	mutex_unlock(&cv->cmutex);
 }

@@ -7,7 +7,7 @@ void init_list(list *head){
 	head->prev = head->next = head;
 }
  
-static list* list_remv(list *entry){
+list* list_remv(list *entry){
 	entry->prev->next = entry->next;
 	entry->next->prev = entry->prev;
 	return entry;

@@ -7,8 +7,8 @@ typedef struct list{
 void init_list(list *head);
 list* list_remv_head(list *l);
 void list_add_tail(list *l, list *entry);
-
+list* list_remv(list *entry);
 /* this is copied from linux 2.6 */
 #define LIST_ENTRY(entry_ptr, type, mem) \
-		((type *)((char *)(entry_ptr) - (unsigned int)(&((type *)0)->mem)))
+		((entry_ptr) ? ((type *)((char *)(entry_ptr) - (unsigned int)(&((type *)0)->mem))): 0)
 #endif
