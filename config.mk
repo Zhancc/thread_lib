@@ -1,27 +1,4 @@
 ###########################################################################
-#
-#    #####          #######         #######         ######            ###
-#   #     #            #            #     #         #     #           ###
-#   #                  #            #     #         #     #           ###
-#    #####             #            #     #         ######             #
-#         #            #            #     #         #
-#   #     #            #            #     #         #                 ###
-#    #####             #            #######         #                 ###
-#
-#
-# Please read the directions in README and in this config.mk carefully.
-# Do -N-O-T- just dump things randomly in here until your project builds.
-# If you do that, you run an excellent chance of turning in something
-# which can't be graded.  If you think the build infrastructure is
-# somehow restricting you from doing something you need to do, contact
-# the course staff--don't just hit it with a hammer and move on.
-#
-# [Once you've read this message, please edit it out of your config.mk!!]
-###########################################################################
-
-
-
-###########################################################################
 # This is the include file for the make file.
 ###########################################################################
 # You should have to edit only this file to get things to build.
@@ -85,7 +62,7 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory
 #
-410TESTS =
+410TESTS = getpid_test1
 
 ###########################################################################
 # Test programs you have written which you wish to run
@@ -93,7 +70,8 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the user/progs
 # directory
 #
-STUDENTTESTS = 
+STUDENTTESTS = virgin life_cycle_test thread_management_test \
+							 memory_management_test console_IO_test misc_test
 
 ###########################################################################
 # Object files for your thread library
@@ -111,7 +89,13 @@ THREAD_OBJS = malloc.o panic.o
 ###########################################################################
 # Object files for your syscall wrappers
 ###########################################################################
-SYSCALL_OBJS = syscall.o
+SYSCALL_OBJS = syscall.o fork.o exec.o set_status.o vanish.o wait.o \
+							 task_vanish.o gettid.o yield.o deschedule.o make_runnable.o \
+							 get_ticks.o sleep.o swexn.o \
+							 new_pages.o remove_pages.o \
+							 getchar.o readline.o print.o set_term_color.o set_cursor_pos.o \
+							 get_cursor_pos.o \
+							 readfile.o halt.o
 
 ###########################################################################
 # Object files for your automatic stack handling
