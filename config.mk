@@ -71,7 +71,7 @@ UPDATE_METHOD = afs
 # directory
 #
 STUDENTTESTS = virgin life_cycle_test thread_management_test \
-							 memory_management_test
+							 memory_management_test console_IO_test misc_test
 
 ###########################################################################
 # Object files for your thread library
@@ -92,7 +92,10 @@ THREAD_OBJS = malloc.o panic.o
 SYSCALL_OBJS = syscall.o fork.o exec.o set_status.o vanish.o wait.o \
 							 task_vanish.o gettid.o yield.o deschedule.o make_runnable.o \
 							 get_ticks.o sleep.o swexn.o \
-							 new_pages.o remove_pages.o print.o 
+							 new_pages.o remove_pages.o \
+							 getchar.o readline.o print.o set_term_color.o set_cursor_pos.o \
+							 get_cursor_pos.o \
+							 readfile.o halt.o
 
 ###########################################################################
 # Object files for your automatic stack handling
