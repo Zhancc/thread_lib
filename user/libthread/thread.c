@@ -26,7 +26,7 @@
  * the return value from the thread's body function. "
  */
 static void default_exit(){
-	thr_exit(0);
+    thr_exit(0);
 }
 
 struct {
@@ -93,15 +93,13 @@ int thr_init(unsigned int size) {
  *     -------------------- <-- peer_thr_tcb
  *     |   padding space  |
  *     -------------------- <-- stack_high
- *     |   peer_thr_tcb   |
+ *     |       args       |
  *     --------------------
  *     |   default_exit   |
  *     --------------------
- *     |       args       |
- *     --------------------
  *     |       func       |
  *     --------------------
- *     | peer_thread_init |
+ *     |   peer_thr_tcb   |
  *     -------------------- <-- peer_thr_esp
  *     |                  |
  *     |                  |
@@ -153,8 +151,8 @@ int thr_create(void *(*func)(void *), void *args) {
 	*(void **)peer_thr_esp = (void *)func;
 	peer_thr_esp -= 4;
 	*(tcb_t **)peer_thr_esp = peer_thr_tcb;
-	peer_thr_esp -=4;
-	*(void **)peer_thr_esp = (void *)peer_thread_init;
+	//peer_thr_esp -=4;
+	//*(void **)peer_thr_esp = (void *)peer_thread_init;
 
 	peer_thr_tid = thread_fork_wrapper(peer_thr_esp);
 	if(peer_thr_tid < 0){
@@ -201,12 +199,14 @@ int thr_join(int tid, void **statusp){
 		ret = -1;
 		goto out;
 	}
+
 	tcb->joined = TRUE;
 	ret = 0;
 
 	while(tcb->status != STATUS_ZOMBIE){
 		cond_wait(&tcb->exited, &gstate.tcb_lock);
 	}
+
 	if(statusp)
 		*statusp = tcb->ret;
 	list_remv(entry);
@@ -230,7 +230,6 @@ void thr_exit( void *status ){
 	for(entry = entry->next; entry!=&gstate.tcb_list; entry = entry->next){
 		tcb = LIST_ENTRY(entry, tcb_t, tcb_entry);
 		if(tcb->tid == tid){
-			entry = list_remv(entry);
 			break;
 		}
 		tcb = 0;

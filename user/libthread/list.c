@@ -17,7 +17,7 @@
  * @return 1 if only dummy head is in list, 0 otherwise.
  */
 static int list_empty(list *l) {
-	return l->prev == l->next;
+	return l->prev == l;
 }
 
 /**
