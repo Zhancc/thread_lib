@@ -84,7 +84,7 @@ THREAD_OBJS = malloc.o panic.o mutex.o asm.o cvar.o list.o thread.o
 # P2" we give you can't build libthrgrp.a.  Once you set up your thread
 # library and fix THREAD_OBJS above, uncomment this line to enable building
 # libthrgrp.a:
-#410USER_LIBS_EARLY += libthrgrp.a
+410USER_LIBS_EARLY += libthrgrp.a
 
 ###########################################################################
 # Object files for your syscall wrappers
