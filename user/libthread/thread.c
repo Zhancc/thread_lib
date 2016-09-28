@@ -10,11 +10,14 @@
 #include <cond.h>
 #include <mutex.h>
 #include <list.h>
+/* NULL */
+#include <stddef.h>
 /* PAGE_SIZE */
 #include <syscall.h>
 #include <assert.h>
 /* _malloc(), thread unsafe */
 #include <malloc.h>
+#include <simics.h>
 
 /**
  * @brief 
@@ -26,18 +29,6 @@ static void default_exit(){
 	thr_exit(0);
 }
 
-/**
- * @brief New thread lands here after thr_create.
- * 
- * The new peer thread deschedule itself if the invoking thread hasn't got a 
- * chance to fill in its tid.
- *
- * @param tcb_ptr Pointer to its own tcb.
- */
-static void peer_thread_init(tcb_t *tcb_ptr){
-	deschedule(&tcb_ptr->tid);
-}
-
 struct {
 	unsigned int stack_size;
 
@@ -47,6 +38,10 @@ struct {
 
 	int root_tid;
 } gstate;
+
+void peer_thread_init(tcb_t *tcb_ptr){
+	deschedule(&tcb_ptr->tid);
+}
 
 /**
  * @brief Initializes the whole thread library.
@@ -212,8 +207,9 @@ int thr_join(int tid, void **statusp){
 	while(tcb->status != STATUS_ZOMBIE){
 		cond_wait(&tcb->exited, &gstate.tcb_lock);
 	}
-	if(!statusp)
+	if(statusp)
 		*statusp = tcb->ret;
+	list_remv(entry);
 	free(tcb->stack_low);
 out:
 	mutex_unlock(&gstate.tcb_lock);
@@ -255,7 +251,7 @@ void thr_exit( void *status ){
  *
  * @return tid of invoking thread.
  */
-int thr_gettid(void){
+int thr_getid(void){
 	return gettid();
 }
 

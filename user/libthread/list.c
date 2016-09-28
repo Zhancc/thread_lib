@@ -3,6 +3,10 @@
  * @brief Implemention of the doubly linked list API.
  * @author Zhan Chan (zhanc1), X.D. Zhai (xingdaz)
  */
+
+/* NULL */
+#include <stddef.h>
+
 #include <list.h>
 
 /**

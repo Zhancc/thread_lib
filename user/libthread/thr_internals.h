@@ -39,10 +39,19 @@ typedef struct _tcb {
 /**
  * @brief System call wrapper for thread_fork.
  *
- * @param esp
+ * @param esp Top of the peer thread stack.
  *
- * @return 
+ * @return tid for invoking thread, 0 for peer thread.
  */
 int thread_fork_wrapper(void *esp);
 
+/**
+ * @brief New thread lands here after thr_create.
+ *
+ * The new peer thread deschedule itself if the invoking thread hasn't got a
+ * chance to fill in its tid.
+ *
+ * @param tcb_ptr Pointer to its own tcb.
+ */
+void peer_thread_init(tcb_t *tcb);
 #endif /* THR_INTERNALS_H */

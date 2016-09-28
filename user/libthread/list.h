@@ -35,8 +35,6 @@
 #ifndef _LIST_H_
 #define _LIST_H_
 
-#define NULL 0x0
-
 /* TODO Per syllabus, we can't just lift code out of reference code base.
  * need to rewrite this. This is copied from linux 2.6 */
 /* 

@@ -7,6 +7,9 @@
 #include <syscall_int.h>
 
 .globl atomic_inc
+.globl thread_fork_wrapper
+.globl xchg
+
 atomic_inc:
   PUSH  %ebp
   MOV   %esp,%ebp         /* Setup preamble */
@@ -18,9 +21,8 @@ atomic_inc:
                              Old value increases by %eax, i.e. 1 */
   MOV   %ecx,%eax         /* Return old value. */
   POP   %ebp              /* Restore %ebp */
-  RET	
+  RET
 
-.global thread_fork_wrapper
 thread_fork_wrapper:
   PUSH  %ebp
   MOV   %esp,%ebp         /* Setup preamble */
@@ -32,11 +34,19 @@ thread_fork_wrapper:
                              new thread(zero) */
   JNZ   .Return           /* Invoking thread skips next instruction and 
                              returns immediately */
-  MOV   %ecx, %esp        /* New thread has its %esp replaced */
+  MOV   %ecx,%esp         /* New thread has its %esp replaced */
 .Return:
   POP   %ebp              /* Restore %ebp */
   RET                     /* This is equivalent to POP %eip.
                              In invoking thread, new thread's tid is returned 
                              unchanged. In new thread, its %eip is overwritten
                              by the value, i.e. address of first instruction of 
-                             child_init, stored at %esp. */
+                             peer_thread_init, stored at %esp. */
+xchg:
+  PUSH  %ebp
+  MOV   %esp,%ebp         /* Setup preamble */
+  MOV   0x4(%ebp),%ecx    /* source */
+  MOV   0x8(%ebp),%eax    /* delta */
+  XCHG  (%ecx),%eax       /* Return the source value and swap in the delta */
+  POP   %ebp              /* Restore %ebp */
+  RET

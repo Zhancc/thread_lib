@@ -8,23 +8,52 @@
 #include <stdlib.h>
 #include <types.h>
 #include <stddef.h>
+#include <mutex.h>
+#include <asm_internals.h>
+#include <malloc.h>
+
+static mutex_t big_lock;
+static int thread_safe = 0;
+#define THREAD_SAFE_ENTRY do{\
+			    if(thread_safe == 0){\
+			       if(!xchg(&thread_safe, 1)){\
+			       	mutex_init(&big_lock);\
+			       }\
+			    }\
+			    mutex_lock(&big_lock);\
+			   }while(0)
+#define THREAD_SAFE_EXIT mutex_unlock(&big_lock)
 
 void *malloc(size_t __size)
 {
-  return NULL;
+  void *ret;
+  THREAD_SAFE_ENTRY;
+  ret = _malloc(__size);
+  THREAD_SAFE_EXIT;
+  return ret;
 }
 
 void *calloc(size_t __nelt, size_t __eltsize)
 {
-  return NULL;
+  void *ret;
+  THREAD_SAFE_ENTRY;
+  ret = _calloc(__nelt, __eltsize);
+  THREAD_SAFE_EXIT;
+  return ret;
 }
 
 void *realloc(void *__buf, size_t __new_size)
 {
-  return NULL;
+  void *ret;
+  THREAD_SAFE_ENTRY;
+  ret = _realloc(__buf, __new_size);
+  THREAD_SAFE_EXIT;
+  return ret;
 }
 
 void free(void *__buf)
 {
-  return;
+  THREAD_SAFE_ENTRY;
+  _free(__buf);
+  THREAD_SAFE_EXIT;
 }

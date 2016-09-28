@@ -19,8 +19,9 @@
 /* public mutex API interface */
 #include <mutex.h>
 /* mutex_t */
-#include <mutex_internals.h>
+#include <mutex_type.h>
 
+#include <asm_internals.h>
 /**
  * @brief Initialize the mutex object. 
  *
@@ -57,7 +58,7 @@ void mutex_destroy(mutex_t *mp) {
  * @param mp Pointer to mutex_t object. 
  */
 void mutex_lock(mutex_t *mp) {
-	int ticket = atomic_inc(mp->next);
+	int ticket = atomic_inc(&(mp->next));
 	while (ticket != mp->owner) {
 		yield(-1);
 	}
