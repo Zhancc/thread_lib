@@ -17,6 +17,7 @@ static void list_add(list *entry, list *prev){
 	entry->next = prev->next;
 	entry->prev = prev;
 	prev->next = entry;
+	prev->next->prev = entry;
 }
 list* list_remv_head(list *l){
 	if(list_empty(l))
@@ -25,5 +26,5 @@ list* list_remv_head(list *l){
 }
 
 void list_add_tail(list *l, list *entry){
-	return list_add(entry, l->prev->prev);
+	return list_add(entry, l->prev);
 }
