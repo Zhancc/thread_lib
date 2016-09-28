@@ -6,7 +6,7 @@
 #include <syscall.h>
 #include <assert.h>
 #include <malloc.h>
-
+#include <simics.h>
 struct{
 	unsigned int stack_size;
 
@@ -58,7 +58,6 @@ void thr_exit( void *status ){
 	for(entry = entry->next; entry!=&gstate.tcb_list; entry = entry->next){
 		tcb = LIST_ENTRY(entry, thread_struct, tcb_entry);
 		if(tcb->tid == tid){
-			entry = list_remv(entry);
 			break;
 		}
 		tcb = 0;
@@ -154,8 +153,9 @@ int thr_join( int tid, void **statusp ){
 	while(tcb->status != STATUS_ZOMBIE){
 		cond_wait(&tcb->cv, &gstate.tcb_lock);
 	}
-	if(!statusp)
+	if(statusp)
 		*statusp = tcb->ret;
+	list_remv(entry);
 	free(tcb->stack_low);
 out:
 	mutex_unlock(&gstate.tcb_lock);
