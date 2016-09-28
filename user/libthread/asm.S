@@ -30,7 +30,7 @@ thread_fork_wrapper:
 	CMP   $0,%eax           /* The return value determines if we are in invoking
                              thread(none zero, new thread's tid) or the 
                              new thread(zero) */
-	JNZ   .Return:          /* Invoking thread skips next instruction and 
+	JNZ   .Return           /* Invoking thread skips next instruction and 
                              returns immediately */
 	MOV   %ecx, %esp        /* New thread has its %esp replaced */
 .Return:

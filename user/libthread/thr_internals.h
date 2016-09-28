@@ -3,32 +3,37 @@
  * @brief Contains internal definitions, macros and functions to implement
  *        thread API.
  * @author Zhan Chan (zhanc1), X.D. Zhai (xingdaz)
- * @date 2016-09-27
  */
 
 #ifndef THR_INTERNALS_H
 #define THR_INTERNALS_H
 
+/* list */
 #include <list.h>
+/* cond_t */
 #include <cond.h>
 
+/* TODO we have to conform to the lingo, has to call RUNNING, RUNNABLE 
+ * ZOMBIE is used to refer to proceses */
 #define STATUS_ON_GOING 0
 #define STATUS_BLOCKED  1
 #define STATUS_ZOMBIE   2
 
-/* TODO why don't we just call this TCB? */
-typedef struct thread_struct {
-	int tid;
-	int status;
+/**
+ * @brief Part of the thread context less the register values.
+ */
+typedef struct _tcb {
+	int tid;          /* Thread ID returned by the kernel */
+	int status;       /* One of the above */
 	int joined;
-	cond_t cv;
+	cond_t exited;    /* Indicate if the peer thread has exited */
 
-	void *ret;
+	void *ret;        /* Pointer to return value */
 
 	list tcb_entry;
-	void *stack_high;
+	void *stack_high; /* Limits of the stack */
 	void *stack_low;
-} thread_struct;
+} tcb_t;
 
 
 /**

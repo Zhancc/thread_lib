@@ -13,6 +13,9 @@
  *
  * @author Zhan Chan (zhanc1), X.D. Zhai (xingdaz)
  */
+
+/* yield */
+#include <syscall.h>
 /* public mutex API interface */
 #include <mutex.h>
 /* mutex_t */

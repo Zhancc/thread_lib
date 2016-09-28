@@ -72,11 +72,13 @@
 #define LIST_ENTRY(entry_ptr, type, member) \
 		((entry_ptr) ? ((type *)((char *)(entry_ptr) - OFFSETOF(type, member))): 0)
 
-typedef struct _list *list_ptr;
+/* TODO for brevity and clarity, we should redefine list pointer type */
+/* TODO should typedef it list_t */
+//typedef struct _list *list_ptr;
 
-typedef struct _list {
-	list_ptr *prev;
-	list_ptr *next;
+typedef struct list {
+	struct list *prev;
+	struct list *next;
 } list;
 
 /**
