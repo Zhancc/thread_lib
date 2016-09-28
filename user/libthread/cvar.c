@@ -22,7 +22,7 @@
 typedef struct waiting {
 	int tid;
 	int about_to_be_runnable;
-	list list_entry;
+	list_t list_entry;
 } waiting;
 
 /**
@@ -34,11 +34,11 @@ typedef struct waiting {
  */
 int cond_init(cond_t *cv) {
 	int ret;
+    
+    if (!cv)
+        return -1;
 
-  if (!cv)
-    return -1;
-
-	ret = mutex_init(&cv->cmutex);
+	ret = mutex_init(&cv->qmutex);
 	if(ret < 0)
 		return ret;
 
@@ -55,7 +55,7 @@ int cond_init(cond_t *cv) {
  * @param cv Pointer to conditional variable.
  */
 void cond_destroy(cond_t *cv) {
-	mutex_destroy(&cv->cmutex);
+	mutex_destroy(&cv->qmutex);
 }
 
 /**
@@ -69,13 +69,13 @@ void cond_wait(cond_t *cv, mutex_t *mp) {
 	struct waiting self;
 	self.tid = gettid();
 	self.about_to_be_runnable = 0;
-	mutex_lock(&cv->cmutex);
+	mutex_lock(&cv->qmutex);
   /* It is ok that we are inserting an address on the stack b/c the stack will 
    * only be cleaned up _after_ the thread wakes up at which point the address
    * is no longer in the queue. */
 	list_add_tail(&cv->queue, &self.list_entry);
 	mutex_unlock(mp);
-	mutex_unlock(&cv->cmutex);
+	mutex_unlock(&cv->qmutex);
   /* Don't sleep some other thread is going to make this thread runnable soon.
    * Otherwise, go to sleep. */
 	deschedule(&self.about_to_be_runnable);
@@ -91,10 +91,10 @@ void cond_wait(cond_t *cv, mutex_t *mp) {
  */
 void cond_signal(cond_t *cv) {
 	struct waiting *next_in_line;
-	list *entry;
-	mutex_lock(&cv->cmutex);
+	list_ptr entry;
+	mutex_lock(&cv->qmutex);
 	entry = list_remv_head(&cv->queue);
-	mutex_unlock(&cv->cmutex);
+	mutex_unlock(&cv->qmutex);
 	if (entry) {
 	  next_in_line = LIST_ENTRY(entry, waiting, list_entry);
 	  next_in_line->about_to_be_runnable = 1;
@@ -109,9 +109,9 @@ void cond_signal(cond_t *cv) {
  */
 void cond_broadcast(cond_t *cv) {
 	struct waiting *next_in_line;
-	list *entry;
+	list_ptr entry;
 
-	mutex_lock(&cv->cmutex);
+	mutex_lock(&cv->qmutex);
 	entry = list_remv_head(&cv->queue);
 
   while(!entry) {
@@ -121,5 +121,5 @@ void cond_broadcast(cond_t *cv) {
 	  entry = list_remv_head(&cv->queue);
   };
 
-	mutex_unlock(&cv->cmutex);
+	mutex_unlock(&cv->qmutex);
 }

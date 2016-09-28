@@ -30,7 +30,7 @@ typedef struct _tcb {
 
 	void *ret;        /* Pointer to return value */
 
-	list tcb_entry;
+	list_t tcb_entry;
 	void *stack_high; /* Limits of the stack */
 	void *stack_low;
 } tcb_t;

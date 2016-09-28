@@ -32,7 +32,7 @@ static void default_exit(){
 struct {
 	unsigned int stack_size;
 
-	list tcb_list;
+	list_t tcb_list;
 	mutex_t tcb_lock;
 	cond_t tcb_cv;
 
@@ -178,7 +178,7 @@ int thr_create(void *(*func)(void *), void *args) {
  */
 int thr_join(int tid, void **statusp){
 	tcb_t *tcb;
-	list *entry = &gstate.tcb_list;
+	list_ptr entry = &gstate.tcb_list;
 	int ret;
 	mutex_lock(&gstate.tcb_lock);
   /* Find the bugger */
@@ -225,7 +225,7 @@ void thr_exit( void *status ){
 	/* looking for non-root/root tcb, currently by searching for tid */
 	int tid = gettid();
 	tcb_t *tcb;
-	list *entry = &gstate.tcb_list;
+	list_ptr entry = &gstate.tcb_list;
 	mutex_lock(&gstate.tcb_lock);
 	for(entry = entry->next; entry!=&gstate.tcb_list; entry = entry->next){
 		tcb = LIST_ENTRY(entry, tcb_t, tcb_entry);

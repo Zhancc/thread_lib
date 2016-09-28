@@ -70,14 +70,11 @@
 #define LIST_ENTRY(entry_ptr, type, member) \
 		((entry_ptr) ? ((type *)((char *)(entry_ptr) - OFFSETOF(type, member))): 0)
 
-/* TODO for brevity and clarity, we should redefine list pointer type */
-/* TODO should typedef it list_t */
-//typedef struct _list *list_ptr;
-
-typedef struct list {
-	struct list *prev;
-	struct list *next;
-} list;
+typedef struct _list *list_ptr;
+typedef struct _list {
+	list_ptr prev;
+	list_ptr next;
+} list_t;
 
 /**
  * @brief Initialize list structure. Both prev and next points to itself.
@@ -86,7 +83,7 @@ typedef struct list {
  *
  * @param head Pointer to dummy head of the list.
  */
-void list_init(list *head);
+void list_init(list_ptr head);
 
 /**
  * @brief Removes an entry from the list and links up the prev and next item.
@@ -95,7 +92,7 @@ void list_init(list *head);
  *
  * @return Pointer to entry just removed.
  */
-list *list_remv(list *entry);
+list_ptr list_remv(list_ptr entry);
 
 /**
  * @brief Removes the head entry of the list.
@@ -104,7 +101,7 @@ list *list_remv(list *entry);
  *
  * @return Pointer to the severed head.
  */
-list *list_remv_head(list *l);
+list_ptr list_remv_head(list_ptr l);
 
 /**
  * @brief Adds a new tail node to the list.
@@ -112,6 +109,6 @@ list *list_remv_head(list *l);
  * @param l Pointer to dummy head of the list.
  * @param entry Pointer to new tail entry.
  */
-void list_add_tail(list *l, list *entry);
+void list_add_tail(list_ptr l, list_ptr entry);
 
 #endif /* _LIST_H_ */
