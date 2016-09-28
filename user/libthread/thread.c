@@ -78,7 +78,7 @@ static void default_exit(){
 	thr_exit(0);
 }
 
-static void child_init(thread_struct *tcb){
+void child_init(thread_struct *tcb){
 	deschedule(&tcb->tid);
 	/* ok, everything is good now*/
 	
@@ -113,8 +113,6 @@ int thr_create( void *(*func)(void *), void *args ){
 	*(void **)esp = (void *)func;
 	esp -= 4;
 	*(thread_struct **)esp = tcb;
-	esp -=4;
-	*(void **)esp = (void *)child_init;
 
 	tid = thread_fork_wrapper(esp);
 	if(tid < 0){

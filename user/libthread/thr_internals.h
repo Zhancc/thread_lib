@@ -28,4 +28,5 @@ typedef struct thread_struct{
 	void *stack_low;
 } thread_struct;
 int thread_fork_wrapper(void *esp);
+void child_init(thread_struct *tcb);
 #endif /* THR_INTERNALS_H */

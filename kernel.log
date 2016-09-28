@@ -1,10 +1,2 @@
-555478425 kdbg: pathos v2(Sep 20 2016 15:39:49), Michael Sullivan and Elly Jones
-6559042011 kdbg: Divide Error
-6559045427 kdbg: Thread: 4
-6559048485 kdbg: Registers:
-6559053883 kdbg: eax: 0x00000000, ebx: 0x00000000, ecx: 0x00000000,
-6559067462 kdbg: edx: 0x00000000, edi: 0x00000000, esi: 0x00000000,
-6559090387 kdbg: ebp: 0xffffefe0, esp: 0xffffefdc, eip: 0x0100009a,
-6559114818 kdbg:  ss:     0x002b,  cs:     0x0023,  ds:     0x002b,
-6559131409 kdbg:  es:     0x002b,  fs:     0x002b,  gs:     0x002b,
-6559145440 kdbg: eflags: 0x00000292
+556066001 kdbg: pathos v2(Sep 20 2016 15:39:49), Michael Sullivan and Elly Jones
+260010065948 udbg: (^_^)_cyclone: START__TYPE_COMPLETE
