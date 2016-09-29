@@ -124,12 +124,12 @@ void cond_broadcast(cond_t *cv) {
 	mutex_lock(&cv->qmutex);
 	entry = list_remv_head(&cv->queue);
 
-    while(!entry) {
-        next_in_line = LIST_ENTRY(entry,  waiting_thr_data_t, list_entry);
-        next_in_line->about_to_be_runnable = 1;
-        make_runnable(next_in_line->tid);
-        entry = list_remv_head(&cv->queue);
-    };
+  while(entry) {
+      next_in_line = LIST_ENTRY(entry, waiting_thr_data_t, list_entry);
+	  next_in_line->about_to_be_runnable = 1;
+	  make_runnable(next_in_line->tid);
+	  entry = list_remv_head(&cv->queue);
+  };
 
 	mutex_unlock(&cv->qmutex);
 }

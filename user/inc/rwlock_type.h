@@ -5,9 +5,17 @@
 #ifndef _RWLOCK_TYPE_H
 #define _RWLOCK_TYPE_H
 
+#include <list.h>
+#include <mutex.h>
 
 typedef struct rwlock {
-  /* fill this in */
+	list queue;
+/* reader = 0: available 
+ * > 0: # of readers
+ * < 0: in exclusive state
+ * */
+	int reader;
+	mutex_t qr_mutex; //protect reader and queue
 } rwlock_t;
 
 #endif /* _RWLOCK_TYPE_H */
