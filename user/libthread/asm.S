@@ -9,7 +9,7 @@
 .globl atomic_inc
 .globl thread_fork_wrapper
 .globl xchg
-
+.globl cmpxchg
 atomic_inc:
     MOV   0x4(%esp),%eax    /* int *m is stored at 0x4(%esp)*/
     MOV   $1,%ecx           /* We are using XADD source,destination.
@@ -30,8 +30,7 @@ thread_fork_wrapper:
                                new thread(zero) */
     JNZ   .Return           /* Invoking thread skips next instruction and 
                                returns immediately */
-    MOV  %ecx, %esp              /* Push tcb_ptr so new thread can invoke
-                               peer_thread_init */
+    MOV  %ecx, %esp            
     CALL  peer_thread_init
     ADD   $4,%esp           /* Reclaims stack */
 .Return:
@@ -45,3 +44,14 @@ xchg:
     MOV   0x8(%esp),%eax    /* delta */
     XCHG  (%ecx),%eax       /* Return the source value and swap in the delta */
     RET
+
+cmpxchg:
+	movl 0x4(%esp), %ecx
+	movl 0x8(%esp), %eax
+	movl 0xc(%esp), %edx
+	lock cmpxchgl %edx, (%ecx)
+	jz 1f
+	movl $0, %eax
+	ret
+1:	movl $1, %eax
+	ret

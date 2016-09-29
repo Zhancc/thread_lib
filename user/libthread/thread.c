@@ -160,6 +160,7 @@ int thr_create(void *(*func)(void *), void *args) {
 		return peer_thr_tid;
 	}
   /* Populate the tid field of the peer threat's tcb */
+	assert(peer_thr_tid != 0);
 	peer_thr_tcb->tid = peer_thr_tid;
 	mutex_lock(&gstate.tcb_lock);
 	list_add_tail(&gstate.tcb_list, &peer_thr_tcb->tcb_entry);

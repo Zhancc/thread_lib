@@ -11,17 +11,21 @@
 #include <mutex.h>
 #include <asm_internals.h>
 #include <malloc.h>
-
+#include <syscall.h>
 static mutex_t big_lock;
 static int thread_safe = 0;
 #define THREAD_SAFE_ENTRY do{\
 			    if(thread_safe == 0){\
-			       if(!xchg(&thread_safe, 1)){\
+				   int tid = gettid();\
+			       if(cmpxchg(&thread_safe, 0, tid)){\
 			       	mutex_init(&big_lock);\
-			       }\
+			       }else{\
+					yield(thread_safe);\
+				   }\
 			    }\
 			    mutex_lock(&big_lock);\
 			   }while(0)
+
 #define THREAD_SAFE_EXIT mutex_unlock(&big_lock)
 
 void *malloc(size_t __size)
