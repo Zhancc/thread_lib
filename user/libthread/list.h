@@ -1,6 +1,6 @@
 /**
  * @file list.h
- * @brief Provides doubly linked list API.
+ * @brief Defines doubly linked list API.
  * 
  * List entry is used as trail guide to find the bigger data structure that 
  * encapsulates it. For example, consider the following declaration.
@@ -26,8 +26,8 @@
  *
  * Instead of have a list entry that encapulates a pointer to the data_point, we
  * have data_pint encapsulate the list entry. When a data_point is created, its 
- * entry is inserted into the list. As long as we the address of the entry, we 
- * can always find the address of the fisrt element of data_point as it is a 
+ * entry is inserted into the list. As long as we have the address of the entry,
+ * we can always find the address of the fisrt element of data_point as it is a 
  * fixed offset away. 
  *
  * @author Zhan Chan (zhanc1), X.D. Zhai (xingdaz)
@@ -68,7 +68,9 @@
  */
 #define OFFSETOF(type, member)  ((unsigned int)(&((type *)0)->member))
 #define LIST_ENTRY(entry_ptr, type, member) \
-		((entry_ptr) ? ((type *)((char *)(entry_ptr) - OFFSETOF(type, member))): 0)
+		((entry_ptr) ? \
+        ((type *)((char *)(entry_ptr) - OFFSETOF(type, member))): \
+        0)
 
 typedef struct _list *list_ptr;
 typedef struct _list {
@@ -79,7 +81,7 @@ typedef struct _list {
 /**
  * @brief Initialize list structure. Both prev and next points to itself.
  *
- * The list is empty when there is only 1 entry in it.
+ * The list is empty when there is only 1 dummy entry in it.
  *
  * @param head Pointer to dummy head of the list.
  */

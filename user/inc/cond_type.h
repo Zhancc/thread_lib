@@ -12,6 +12,8 @@
 /**
  * @brief This is a structure that contains a queue into which thread can insert
  *        their list entry and a lock for the queue. 
+ *
+ * TODO We should have 2 more variables, "initizliaed" and "destroyed".
  */
 typedef struct cond {
     mutex_t qmutex; /* Lock around the queue */

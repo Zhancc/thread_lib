@@ -1,13 +1,16 @@
 /**
  * @file list.c
  * @brief Implemention of the doubly linked list API.
+ *
+ * This list is a circular list implementation. The list is empty when there is
+ * only a dummy head in it.
+ *
  * @author Zhan Chan (zhanc1), X.D. Zhai (xingdaz)
  */
 
-/* NULL */
-#include <stddef.h>
-
+/* Public APIs */
 #include <list.h>
+#include <stddef.h> /* NULL */
 
 /**
  * @brief Check if the list is empty.
@@ -45,13 +48,12 @@ list_ptr list_remv(list_ptr entry) {
 
 list_ptr list_remv_head(list_ptr l) {
 	if (list_empty(l))
-    /* After removing the sole item, the list is empty */
 		return NULL;
-  /* The first data element is the one after the head as the list is empty
-   * when there is only 1 element in it. */
+    /* The first data element is the one after the dummy head */
 	return list_remv(l->next);
 }
 
 void list_add_tail(list_ptr l, list_ptr entry) {
+    /* The list is circular, so the last element is l->prev */
 	return list_add(l->prev, entry);
 }

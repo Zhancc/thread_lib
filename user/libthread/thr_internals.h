@@ -8,30 +8,24 @@
 #ifndef THR_INTERNALS_H
 #define THR_INTERNALS_H
 
-/* list */
-#include <list.h>
-/* cond_t */
-#include <cond.h>
+#include <list.h>   /* list_t */
+#include <cond.h>   /* cond_t */
 
-/* TODO we have to conform to the lingo, has to call RUNNING, RUNNABLE 
- * ZOMBIE is used to refer to proceses */
-#define STATUS_ON_GOING 0
-#define STATUS_BLOCKED  1
-#define STATUS_ZOMBIE   2
+#define STATUS_RUNNING  0
+#define STATUS_RUNNABLE 1
+#define STATUS_EXITED   2
 
 /**
- * @brief Part of the thread context less the register values.
+ * @brief Thread Control Block 
  */
 typedef struct _tcb {
-	int tid;          /* Thread ID returned by the kernel */
-	int status;       /* One of the above */
-	int joined;
-	cond_t exited;    /* Indicate if the peer thread has exited */
-
-	void *ret;        /* Pointer to return value */
-
-	list_t tcb_entry;
-	void *stack_high; /* Limits of the stack */
+	int tid;            /* Thread ID returned by the kernel */
+	int status;         /* One of the above */
+	int joined;         /* Indicate if it has been joined by some thread */
+	cond_t exited;      /* Indicate if the peer thread has exited */
+	void *ret;          /* Pointer to address that holds return status */
+	list_t tcb_entry;   /* List entry used to find the previous and next tcb */
+	void *stack_high;   /* Limits of the stack */
 	void *stack_low;
 } tcb_t;
 
