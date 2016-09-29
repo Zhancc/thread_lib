@@ -1,3 +1,4 @@
+#if 0
 #include <rwlock.h>
 #include <rwlock_type.h>
 
@@ -105,3 +106,4 @@ void rwlock_downgrade( rwlock_t *rwlock){
 	unlock(rwlock->lock);
 
 }
+#endif
