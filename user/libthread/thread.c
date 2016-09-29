@@ -16,7 +16,11 @@
 /* Private APIs */
 #include <thr_internals.h>  /* tcb_t, thread_fork_wrapper, and
                                peer_thread_init */
+#include <swexn_handler.h>  /* pagefault_handler_arg_t */
 #include <list.h>           /* list_t */
+
+
+extern pagefault_handler_arg_t *root_thr_pagefault_arg;
 
 /**
  * @brief 
@@ -70,6 +74,11 @@ int thr_init(unsigned int size) {
 		return -3;
     if(cond_init(&root_tcb->exited) < 0)
 		return -1;
+
+    /* Coast is clear and we are set to limit the size of the root thread's 
+     * stack growth. */
+    root_thr_pagefault_arg->fixed_size = size;
+
 	root_tcb->tid = gettid();
 	root_tcb->joined = FALSE;
 	root_tcb->status = STATUS_RUNNING;

@@ -14,13 +14,23 @@
 #define STACK_EXTENSION     PAGE_SIZE
 
 /**
+ * @brief Structure that holds the data for root thread's pagefault handler's
+ *        argument
+ */
+typedef struct pagefault_handler_arg {
+    void *stack_high;           /* Highest byte of the kernel allocated stack */
+    void *stack_low;            /* Lower byte of the stack, initialzed to kernel 
+                                   allocated low. Gets updated as newpages are 
+                                   alloccated */
+    unsigned int fixed_size;    /* Initialized to zero to indicate auto growth. 
+                                   None zero to inidcate thr_init() has been 
+                                   called and there is a limit to stack growth 
+                                   */
+} pagefault_handler_arg_t;
+
+/**
  * @brief Software exception handler that responds to exceptions.
- *
- * Fails to actually allocate new page if the stack grows into the heap. When
- * it first enters the handler, we assume that the kernel is being reasonable
- * and aligned the stack_low with the page boundary. Afterwards, it will be
- * aligned too because the extension amount is multiples of PAGE_SIZE.
- *
+*
  * @param arg Pointer to argument.
  * @param ureg Pointer to register set.
  */

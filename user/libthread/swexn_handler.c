@@ -11,9 +11,13 @@
 #include <malloc.h>         /* _malloc */
 #include <memlib.h>         /* mem_sbrk */
 #include <syscall.h>        /* swexn */
+#include <simics.h>
 
-/* Global variable that stores the location of the handler's stack pointer */
+/* Global pointer to ewexn handler's stack pointer */
 void *esp3;
+
+/* Global pointer to root thread's page fault handler argument */
+pagefault_handler_arg_t *root_thr_pagefault_arg;
 
 /**
  * @brief Page fault handler. 
@@ -25,37 +29,56 @@ void *esp3;
  * 
  * @param stack_low Pointer to current lowest byte of main thread stack.
  */
-static void *
-pagefault(void *stack_low)
+static int
+pagefault(void *arg)
 {
+    int new_pages_ret;
     void *brk, *new_stack_low;
+    unsigned int new_stack_size, stack_fixed_size;
+    pagefault_handler_arg_t *stack_data;
 
-    new_stack_low = (void *)((char *) stack_low - STACK_EXTENSION);
+    stack_data = (pagefault_handler_arg_t *)arg;
+    stack_fixed_size = stack_data->fixed_size;
+    new_stack_low = (void *)((char *) stack_data->stack_low - STACK_EXTENSION);
+    new_stack_size = stack_data->stack_high - new_stack_low;
+
+    /* Failure: Outgrown the declared stack. Single threaded application won't
+     * run into this problem. */
+    if (stack_fixed_size != 0 && new_stack_size >= stack_fixed_size)
+        return -1;
+
+    /* Failure: Runs into the heap */
     brk = mem_sbrk(0);
     if (new_stack_low <= brk)
-        return stack_low;
+        return -2;
 
-    /* Can't allocate new pages? Too bad. TODO need to kill thread */
-    if (new_pages(new_stack_low, STACK_EXTENSION) < 0)
-        return stack_low;
+    new_pages_ret = new_pages(new_stack_low, STACK_EXTENSION);
+    /* Failure: Can't allocate new pages. Thread gets killed by kernel. */
+    if (new_pages_ret < 0)
+        return -3;
 
-    return new_stack_low;
+    /* Update the data */
+    stack_data->stack_low = new_stack_low;
+    return 0;
 }
 
 void
 swexn_handler(void *arg, ureg_t *ureg)
 {
     unsigned int cause;
-    void *stack_low;
+    int pagefault_ret = 0;
 
     cause = ureg->cause;
-    stack_low = arg;
 
     switch (cause) {
     case SWEXN_CAUSE_PAGEFAULT:
-        stack_low = pagefault(stack_low); 
+        pagefault_ret = pagefault(arg); 
         break;
     }
-    swexn(esp3, swexn_handler, stack_low, ureg);
-}
 
+    /* Only register the handler if there wasn't any problem in the
+     * exception handling. Otherwise, let the kernel kill it next time the
+     * exception happens. */
+    if (pagefault_ret >= 0)
+        swexn(esp3, swexn_handler, arg, ureg);
+}

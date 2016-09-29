@@ -28,6 +28,7 @@
 #include <swexn_handler.h>  /* SWEXN_STACK_SIZE, ESP3_OFFSET */
 
 extern void *esp3;
+extern pagefault_handler_arg_t *root_thr_pagefault_arg;
 
 /**
  * @brief Installs the page fault handler.
@@ -37,9 +38,18 @@ extern void *esp3;
 void
 install_autostack(void *stack_high, void *stack_low) 
 {
-    /* Make room for the exception handler stack, never freed */
+    /* Make room for the exception handler stack, never freed. At this point
+     * we are still single threaded */
     esp3 = _malloc(SWEXN_STACK_SIZE + ESP3_OFFSET);
     if (!esp3)
         return;
-    swexn(esp3, swexn_handler, stack_low, NULL);
+
+    /* Populate root thread pagefault handler argument */
+    root_thr_pagefault_arg = _malloc(sizeof(pagefault_handler_arg_t));
+    root_thr_pagefault_arg->stack_high = stack_high;
+    root_thr_pagefault_arg->stack_low = stack_low;
+    root_thr_pagefault_arg->fixed_size = 0;
+    
+    /* TODO check for return status */
+    swexn(esp3, swexn_handler, (void *)root_thr_pagefault_arg, NULL);
 }
