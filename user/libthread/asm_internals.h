@@ -26,4 +26,15 @@ int atomic_inc(volatile int *m);
  */
 int xchg(int *source, int delta);
 
+/**
+ * @brief Atomically compare the value at source and test, if equal,
+ * set value pointed by source to set
+ *
+ * @param source ptr to the source value
+ * @param test the value to compare with
+ * @param set the value to be set when equal
+ *
+ * @return if equal, return positive; if not, return zero
+ */
+int cmpxchg(int *source, int test, int set);
 #endif

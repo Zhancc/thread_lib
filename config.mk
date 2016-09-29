@@ -62,9 +62,13 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory
 #
+<<<<<<< HEAD
 410TESTS = paraguay startle getpid_test1 cyclone join_specific_test \
 		   actual_wait misbehave_wrap stack_test1 cat cvar_test excellent \
 		   wild_test1
+=======
+410TESTS = paraguay startle getpid_test1 cyclone join_specific_test actual_wait misbehave_wrap agility_drill beady_test mandelbrot
+>>>>>>> zhanc1
 
 ###########################################################################
 # Test programs you have written which you wish to run
