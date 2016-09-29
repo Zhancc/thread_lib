@@ -30,12 +30,14 @@
  */
 void panic(const char *fmt, ...)
 {
+    /* Points to each unnamed argument in turn */
 	va_list vl;
 	char buf[80];
 
+    /* Initializes vl to point at the first unnamed argument */
 	va_start(vl, fmt);
 	vsnprintf(buf, sizeof (buf), fmt, vl);
-	va_end(vl);
+	va_end(vl); /* Cleans up when done */
 	lprintf(buf);
 
 	va_start(vl, fmt);
