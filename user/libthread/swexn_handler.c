@@ -7,7 +7,7 @@
  *
  * @author X.D. Zhai (xingdaz), Zhan Chan (zhanc1)
  */
-#include <swexn_handler.h>
+#include <swexn_handler.h> 
 #include <malloc.h>         /* _malloc */
 #include <memlib.h>         /* mem_sbrk */
 #include <syscall.h>        /* swexn */
@@ -53,11 +53,11 @@ pagefault(void *arg)
         return -2;
 
     new_pages_ret = new_pages(new_stack_low, STACK_EXTENSION);
-    /* Failure: Can't allocate new pages. Thread gets killed by kernel. */
+    /* Failure: Can't allocate new pages. */
     if (new_pages_ret < 0)
         return -3;
 
-    /* Update the data */
+    /* Sucess: Update global stack data */
     stack_data->stack_low = new_stack_low;
     return 0;
 }
@@ -65,16 +65,10 @@ pagefault(void *arg)
 void
 swexn_handler(void *arg, ureg_t *ureg)
 {
-    unsigned int cause;
     int pagefault_ret = 0;
 
-    cause = ureg->cause;
-
-    switch (cause) {
-    case SWEXN_CAUSE_PAGEFAULT:
+    if (ureg->cause == SWEXN_CAUSE_PAGEFAULT)
         pagefault_ret = pagefault(arg); 
-        break;
-    }
 
     /* Only register the handler if there wasn't any problem in the
      * exception handling. Otherwise, let the kernel kill it next time the

@@ -6,7 +6,7 @@
 
 /* Public APIs */
 #include <thread.h>
-#include <syscall.h>        /* PAGE_SIZE */
+#include <syscall.h>        /* PAGE_SIZE, swexn */
 #include <stddef.h>         /* NULL */
 #include <assert.h>         /* assert */
 #include <malloc.h>         /* malloc() */
@@ -16,11 +16,28 @@
 /* Private APIs */
 #include <thr_internals.h>  /* tcb_t, thread_fork_wrapper, and
                                peer_thread_init */
-#include <swexn_handler.h>  /* pagefault_handler_arg_t */
+#include <swexn_handler.h>  /* pagefault_handler_arg_t,  */
 #include <list.h>           /* list_t */
 
 
 extern pagefault_handler_arg_t *root_thr_pagefault_arg;
+
+/**
+ * @brief Exception handler for each peer thread.
+ *
+ * Any kind of software exception will call the whole task to vanish. The error 
+ * is, most of the time, irrecoverable b/c the thread could be holding locks, 
+ * in the middle of modifying shared data structure or working on to produce a 
+ * result that other thread may be depending on. 
+ *
+ * @param arg
+ * @param ureg
+ */
+static void
+peer_thr_swexn_handler(void *arg, ureg_t *ureg)
+{
+    task_vanish(-1);
+}
 
 /**
  * @brief 
@@ -28,7 +45,7 @@ extern pagefault_handler_arg_t *root_thr_pagefault_arg;
  * "should be the same as if the function had called thr_exit() specifying
  * the return value from the thread's body function. "
  */
-static void default_exit(){
+static void default_exit() {
     thr_exit(0);
 }
 
@@ -42,10 +59,10 @@ struct {
 	mutex_t tcb_lock;
 	cond_t tcb_cv;
 
-	//int root_tid;
+	int root_tid;
 } gstate;
 
-void peer_thread_init(tcb_t *tcb_ptr){
+void peer_thread_init(tcb_t *tcb_ptr) {
 	deschedule(&tcb_ptr->tid);
 }
 
@@ -64,7 +81,7 @@ int thr_init(unsigned int size) {
 		return -1;
 	if(mutex_init(&gstate.tcb_lock) < 0)
 		return -2;
-	//gstate.root_tid = gettid();
+	gstate.root_tid = gettid();
 	gstate.stack_size = size;
 	list_init(&gstate.tcb_list);
 
@@ -132,7 +149,8 @@ int thr_init(unsigned int size) {
 int thr_create(void *(*func)(void *), void *args) {
     unsigned int peer_thr_stack_size;
     int peer_thr_tid;
-    void *peer_thr_stack_low, *peer_thr_stack_high, *peer_thr_esp;
+    void *peer_thr_stack_low, *peer_thr_stack_high, *peer_thr_esp,
+         *peer_thr_handler_esp3;
     tcb_t *peer_thr_tcb;
 
     /* It is nice to allocate multiples of PAGE_SIZE amount of memory */
@@ -153,7 +171,8 @@ int thr_create(void *(*func)(void *), void *args) {
     /* We are assuming that we will not get tid 0. Therefore, we can use it as 
      * an indicator to see if it is safe to deschedule itself. */
     if(cond_init(&peer_thr_tcb->exited) < 0)
-		return -1;
+		return -2;
+
 	peer_thr_tcb->tid = 0; 
 	peer_thr_tcb->status = STATUS_RUNNING;
 	peer_thr_tcb->joined = FALSE;
@@ -161,7 +180,7 @@ int thr_create(void *(*func)(void *), void *args) {
 	peer_thr_tcb->stack_high = peer_thr_stack_high;
 	peer_thr_tcb->stack_low = peer_thr_stack_low;
   
-    /* Prepare calling stack */
+    /* Prepare the calling stack, thinking the thread_fork might exceed */
 	peer_thr_esp -= 4;
 	*(void **)peer_thr_esp = (void *)args;
 	peer_thr_esp -= 4;
@@ -175,8 +194,14 @@ int thr_create(void *(*func)(void *), void *args) {
 	peer_thr_tid = thread_fork_wrapper(peer_thr_esp);
 	if(peer_thr_tid < 0){
 		free(peer_thr_stack_low);
-		return peer_thr_tid;
+		return -3;
 	}
+
+    /* Register an exception handler that kills the task if any kind of
+     * software exception is encountered. */
+    peer_thr_handler_esp3 = malloc(SWEXN_STACK_SIZE + ESP3_OFFSET);
+    if (swexn(peer_thr_handler_esp3, peer_thr_swexn_handler, NULL, NULL) < 0)
+        return -4;
 
     /* Populate the tid field of the peer threat's TCB and insert it into the
      * list */
