@@ -240,19 +240,19 @@ int thr_join(int tid, void **statusp) {
 		tcb = NULL;
 	}
 
-    /* Haven't found it, go home */
+    /* Failure: Haven't found it, go home */
 	if(!tcb){
 		ret = -2;
 		goto out;
 	}
 
-    /* Some other thread have claimed this thread, go home */
+    /* Failure: Some other thread have claimed this thread, go home */
 	if(tcb->joined == TRUE){
 		ret = -1;
 		goto out;
 	}
 
-    /* We claim this thread */
+    /* Success: We claim this thread */
 	tcb->joined = TRUE;
 	ret = 0;
 	while(tcb->status != STATUS_EXITED){

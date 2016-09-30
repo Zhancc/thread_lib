@@ -62,9 +62,31 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory
 #
-410TESTS = paraguay startle getpid_test1 cyclone join_specific_test \
-		   actual_wait misbehave_wrap stack_test1 cat cvar_test excellent \
-		   wild_test1 switzerland
+410TESTS = actual_wait \
+		   agility_drill \
+		   beady_test \
+		   bistromath \
+		   cat \
+		   cvar_test \
+		   cyclone \
+		   excellent \
+		   getpid_test1 \
+		   halt_test \
+           join_specific_test \
+           juggle \
+           largetest \
+           mandelbrot \
+           misbehave_wrap \
+           multitest \
+           mutex_destroy_test \
+           nibbles \
+		   paraguay \
+		   rwlock_downgrade_read_test \
+		   stack_test1 \
+		   startle \
+		   switzerland \
+		   thr_exit_join \
+		   wild_test1 
 
 ###########################################################################
 # Test programs you have written which you wish to run
