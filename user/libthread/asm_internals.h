@@ -37,4 +37,10 @@ int xchg(int *source, int delta);
  * @return if equal, return positive; if not, return zero
  */
 int cmpxchg(int *source, int test, int set);
+
+/**
+ * @brief default return point, which takes return value as argument to default_exit
+ * @return should never return
+ */
+void default_exit_entry();
 #endif

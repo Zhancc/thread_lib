@@ -64,7 +64,7 @@ UPDATE_METHOD = afs
 #
 410TESTS = paraguay startle getpid_test1 cyclone join_specific_test \
 		   actual_wait misbehave_wrap stack_test1 cat cvar_test excellent \
-		   wild_test1 switzerland
+		   wild_test1 switzerland excellent
 
 ###########################################################################
 # Test programs you have written which you wish to run

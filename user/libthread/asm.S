@@ -10,6 +10,7 @@
 .globl thread_fork_wrapper
 .globl xchg
 .globl cmpxchg
+.globl default_exit_entry
 atomic_inc:
     MOV   0x4(%esp),%eax    /* int *m is stored at 0x4(%esp)*/
     MOV   $1,%ecx           /* We are using XADD source,destination.
@@ -55,3 +56,9 @@ cmpxchg:
 	ret
 1:	movl $1, %eax
 	ret
+
+default_exit_entry:
+	pushl %eax          /* the return value should be exit status */
+	call default_exit   
+1:  
+	jmp 1b  /* should never reach this point*/

@@ -17,7 +17,7 @@
 #include <list.h>       /* list_init, list_add_tail, and list_remv_head */
 #include <cond_type.h>  /* cont_t */
 #include <syscall.h>    /* deschedule and make_runnable */
-
+#include <assert.h>
 /**
  * @brief A waiting thread populate this structure before enqueue and sleep.
  */
@@ -51,6 +51,7 @@ int cond_init(cond_t *cv) {
 		return ret;
 
 	list_init(&cv->queue);
+	cv->init_flag = 1;
 	return 0;
 }
 
@@ -64,6 +65,10 @@ int cond_init(cond_t *cv) {
  * @param cv Pointer to initialized conditional variable struct.
  */
 void cond_destroy(cond_t *cv) {
+	mutex_lock(&cv->qmutex);
+	assert(list_empty(&cv->queue));
+	cv->init_flag = 0;
+	mutex_unlock(&cv->qmutex);
 	mutex_destroy(&cv->qmutex);
 }
 
@@ -83,6 +88,7 @@ void cond_wait(cond_t *cv, mutex_t *mp) {
      * only be cleaned up _after_ the thread wakes up at which point the address
      * is no longer in the queue. */
 	mutex_lock(&cv->qmutex);
+	assert(cv->init_flag);
 	list_add_tail(&cv->queue, &data.list_entry);
 	mutex_unlock(mp);
 	mutex_unlock(&cv->qmutex);
@@ -102,6 +108,7 @@ void cond_signal(cond_t *cv) {
 	list_ptr entry;
 
 	mutex_lock(&cv->qmutex);
+	assert(cv->init_flag);
 	entry = list_remv_head(&cv->queue);
 	mutex_unlock(&cv->qmutex);
 
@@ -122,6 +129,7 @@ void cond_broadcast(cond_t *cv) {
 	list_ptr entry;
 
 	mutex_lock(&cv->qmutex);
+	assert(cv->init_flag);
 	entry = list_remv_head(&cv->queue);
 
   while(entry) {

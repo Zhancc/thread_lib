@@ -17,15 +17,15 @@
 #include <thr_internals.h>  /* tcb_t, thread_fork_wrapper, and
                                peer_thread_init */
 #include <list.h>           /* list_t */
-
+#include "asm_internals.h"
 /**
  * @brief 
  * TODO I am not sure if this is the right behavior because the handout says
  * "should be the same as if the function had called thr_exit() specifying
  * the return value from the thread's body function. "
  */
-static void default_exit(){
-    thr_exit(0);
+void default_exit(void *ret){
+    thr_exit(ret);
 }
 
 /**
@@ -156,7 +156,7 @@ int thr_create(void *(*func)(void *), void *args) {
 	peer_thr_esp -= 4;
 	*(void **)peer_thr_esp = (void *)args;
 	peer_thr_esp -= 4;
-	*(void **)peer_thr_esp = (void *)default_exit;
+	*(void **)peer_thr_esp = (void *)default_exit_entry;
 	peer_thr_esp -= 4;
 	*(void **)peer_thr_esp = (void *)func;
 	peer_thr_esp -= 4;
