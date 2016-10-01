@@ -1,6 +1,23 @@
-#if 0
 #include <rwlock.h>
 #include <rwlock_type.h>
+#include <assert.h>
+#include <syscall.h>
+#include <list.h>
+/**
+ *  * @brief A waiting thread populate this structure before enqueue and sleep.
+ *   */
+typedef struct waiting_thr_data {
+    /* tid of the waiting thread */
+    int tid;
+    /* This is the "reject" argument of the deschedule syscall. The idea is if
+ 	 * some thread wants to wake up a thread, it indicates its intent by setting
+ 	 * this variable to 1 before calling  make_runnable. A thread about to
+ 	 * deschedule itself will atomically check this variable. If it is none
+ 	 * zero, i.e. it will runnable soon, then it will not deschedule itself. */
+    int about_to_be_runnable;
+    list_t list_entry;
+	int type;
+} waiting_thr_data_t;
 
 int rwlock_init( rwlock_t *rwlock ){
 	if(mutex_init(&rwlock->qr_mutex) < 0)
@@ -8,106 +25,145 @@ int rwlock_init( rwlock_t *rwlock ){
 
 	list_init(&rwlock->queue);
 	rwlock->reader = 0;
+	rwlock->init_flag = 1;
 	return 0;
 }
 
 void rwlock_lock( rwlock_t *rwlock, int type ){
-	if(type == read){
-		lock(rwlock->lock);
-		if(rwlock->queue){
-			enqueue(self)
-			self->indicator = 0;
-			unlock(rwlock->lock);
-			deschedule(self)
+	waiting_thr_data_t data;
+	data.tid = gettid();
+	data.about_to_be_runnable = 0;
+	data.type = type;
+    mutex_lock(&rwlock->qr_mutex);
+    assert(rwlock->init_flag);
+	if(type == RWLOCK_READ){
+		if(!list_empty(&rwlock->queue)){
+			list_add_tail(&rwlock->queue, &data.list_entry);
+			mutex_unlock(&rwlock->qr_mutex);
+			deschedule(&data.about_to_be_runnable);
 			//we are waken up
-			goto out
+			goto out;
 		}else{
 			//queue is empty
-			if(reader < 0){
-				enqueue(self)
-				self->indicator = 0;
-				unlock(rwlock->lock);
-				deschedule(self)
+			if(rwlock->reader < 0){
+				list_add_tail(&rwlock->queue, &data.list_entry);
+				mutex_unlock(&rwlock->qr_mutex);
+				deschedule(&data.about_to_be_runnable);
 				//we are waken up
-				goto out
+				goto out;
 			}else{
-				reader++;
-				unlock(rwlock->lock);
-				goto out
+				rwlock->reader++;
+				mutex_unlock(&rwlock->qr_mutex);
+				goto out;
 			}
 		}
 	}else{
-		lock(rwlock->lock);
-		if(rwlock->queue){
-			enqueue(self);
-			self->indicator = 0;
-			unlock(rwlock->lock);
-			deschedue(self)
-			goto out
+		/* this is a write lock request*/
+		if(!list_empty(&rwlock->queue)){
+			list_add_tail(&rwlock->queue, &data.list_entry);
+			mutex_unlock(&rwlock->qr_mutex);
+			deschedule(&data.about_to_be_runnable);
+			goto out;
 		}else{
-			if(reader != 0){
-				enqueue(self);
-            	self->indicator = 0;
-            	unlock(rwlock->lock);
-            	deschedue(self)
-            	goto out
+			if(rwlock->reader != 0){
+				list_add_tail(&rwlock->queue, &data.list_entry);
+            	mutex_unlock(&rwlock->qr_mutex);
+            	deschedule(&data.about_to_be_runnable);
+            	goto out;
 			}else{
-				reader = -1;
-				unlock(rwlock->lock);
-				goto out
+				rwlock->reader = -data.tid;
+				mutex_unlock(&rwlock->qr_mutex);
+				goto out;
 			}
 		}
 	}
+out:
+	return;
 }
 void rwlock_unlock( rwlock_t *rwlock ){
-	lock(rwlock->lock)
-	assert(reader != 0);
-	if(reader < 0){
+	waiting_thr_data_t *next_in_line;
+	list_ptr entry;
+	mutex_lock(&rwlock->qr_mutex);
+    assert(rwlock->init_flag);	
+	assert(rwlock->reader != 0);
+	if(rwlock->reader < 0){
 		/* we are a writer lock*/
-		if(!relock->queue){
-			reader = 0;
-			unlock(rwlock->lock);
-			goto out
+		rwlock->reader = 0;
+		if(list_empty(&rwlock->queue)){
+			mutex_unlock(&rwlock->qr_mutex);
+			goto out;
 		}else{
-			for(s = dequeue; s && s->type == read; s = dequeue){
-				reader++;
-				makerunnable(s->tid);
+			entry = list_remv_head(&rwlock->queue);
+			next_in_line = LIST_ENTRY(entry, waiting_thr_data_t, list_entry);
+			if(next_in_line->type == RWLOCK_WRITE){
+				rwlock->reader = -gettid();;
+				next_in_line->about_to_be_runnable = 1;
+				make_runnable(next_in_line->tid);
 			}
-			unlock(rwlock->lock);
+
+			while(next_in_line && next_in_line->type == RWLOCK_READ){
+				next_in_line->about_to_be_runnable = 1;
+				rwlock->reader++;
+				make_runnable(next_in_line->tid);
+				entry = list_remv_head(&rwlock->queue);
+				next_in_line = LIST_ENTRY(entry, waiting_thr_data_t, list_entry);
+			}
+			mutex_unlock(&rwlock->qr_mutex);
 			goto out;
 		}
-	}else if(reader > 1){
+	}else if(rwlock->reader > 1){
 		/* we are not last reader lock */
-		reader--;
-		unlock(rwlock->lock);
+		rwlock->reader--;
+		mutex_unlock(&rwlock->qr_mutex);
 		goto out;
 	}else{
 		/* we are last reader */
-		reader--;
-		if(!rwlock->queue){
+		rwlock->reader--;
+		if(list_empty(&rwlock->queue)){
 			/*no one waiting*/
-			unlock(rwlock->lock)
-			goto out
+			mutex_unlock(&rwlock->qr_mutex);
+			goto out;
 		}else{
-			s = dequeue(rwlock->queue);
-			assert(s->type == write);
-			reader = -1;
-			unlock(rwlock->queue)
-			makerunnable(s->tid);
+			entry = list_remv_head(&rwlock->queue);
+			next_in_line = LIST_ENTRY(entry, waiting_thr_data_t, list_entry);
+			assert(next_in_line->type == RWLOCK_WRITE);
+			next_in_line->about_to_be_runnable = 1;
+			rwlock->reader = -next_in_line->tid;
+			mutex_unlock(&rwlock->qr_mutex);
+			make_runnable(next_in_line->tid);
 		}
 	}
+out:
+	return;
 
 }
 void rwlock_destroy( rwlock_t *rwlock ){
 	/*assert on the illegal state*/
+	mutex_lock(&rwlock->qr_mutex);
+	assert(rwlock->reader == 0);
+	rwlock->init_flag = 0;
+	mutex_unlock(&rwlock->qr_mutex);
+	mutex_destroy(&rwlock->qr_mutex);
 }
+
 void rwlock_downgrade( rwlock_t *rwlock){
-	assert(reader < 0);
-	reader = 1;
+	waiting_thr_data_t *next_in_line;	
+	list_ptr entry;
+	mutex_lock(&rwlock->qr_mutex);
+    assert(rwlock->init_flag);	
+	assert(-rwlock->reader == gettid());
+	rwlock->reader = 1;
 	/*dequeue other readers*/
-	lock(rwlock->lock);
-	for(...);
-	unlock(rwlock->lock);
+	entry = list_remv_head(&rwlock->queue);
+	next_in_line = LIST_ENTRY(entry, waiting_thr_data_t, list_entry);
+    while(next_in_line && next_in_line->type == RWLOCK_READ){
+        next_in_line->about_to_be_runnable = 1;
+        rwlock->reader++;
+        make_runnable(next_in_line->tid);
+		entry = list_remv_head(&rwlock->queue);
+		next_in_line = LIST_ENTRY(entry, waiting_thr_data_t, list_entry);
+    }	
+
+	mutex_unlock(&rwlock->qr_mutex);
 
 }
-#endif

@@ -9,13 +9,14 @@
 #include <mutex.h>
 
 typedef struct rwlock {
-	list queue;
+	list_t queue;
 /* reader = 0: available 
  * > 0: # of readers
  * < 0: in exclusive state
  * */
 	int reader;
 	mutex_t qr_mutex; //protect reader and queue
+	int init_flag;
 } rwlock_t;
 
 #endif /* _RWLOCK_TYPE_H */

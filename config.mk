@@ -64,7 +64,7 @@ UPDATE_METHOD = afs
 #
 410TESTS = paraguay startle getpid_test1 cyclone join_specific_test \
 		   actual_wait misbehave_wrap stack_test1 cat cvar_test excellent \
-		   wild_test1 switzerland mutex_destroy_test
+		   wild_test1 switzerland mutex_destroy_test rwlock_downgrade_read_test
 
 ###########################################################################
 # Test programs you have written which you wish to run
