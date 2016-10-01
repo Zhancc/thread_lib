@@ -3,8 +3,12 @@
 #include <rwlock_type.h>
 
 int rwlock_init( rwlock_t *rwlock ){
-	
+	if(mutex_init(&rwlock->qr_mutex) < 0)
+		return -1;
 
+	list_init(&rwlock->queue);
+	rwlock->reader = 0;
+	return 0;
 }
 
 void rwlock_lock( rwlock_t *rwlock, int type ){
