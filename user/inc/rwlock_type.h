@@ -12,10 +12,10 @@ typedef struct rwlock {
 	list_t queue;
 /* reader = 0: available 
  * > 0: # of readers
- * < 0: in exclusive state
+ * < 0: in exclusive state, and is -tid of the holder
  * */
 	int reader;
-	mutex_t qr_mutex; //protect reader and queue
+	mutex_t qr_mutex;
 	int init_flag;
 } rwlock_t;
 
