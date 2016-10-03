@@ -135,8 +135,8 @@ void rwlock_unlock( rwlock_t *rwlock ){
 	}
 out:
 	return;
-
 }
+
 void rwlock_destroy( rwlock_t *rwlock ){
 	/*assert on the illegal state*/
 	mutex_lock(&rwlock->qr_mutex);
@@ -165,5 +165,4 @@ void rwlock_downgrade( rwlock_t *rwlock){
     }	
 
 	mutex_unlock(&rwlock->qr_mutex);
-
 }

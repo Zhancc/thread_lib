@@ -1,5 +1,8 @@
-/** @file rwlock_type.h
- *  @brief This file defines the type for reader/writer locks.
+/** 
+ * @file rwlock_type.h
+ * @brief This file defines the type for reader/writer locks.
+ * @author X.D. Zhai (xingdaz)
+ * @author Zhan Chen (zhanc1)
  */
 
 #ifndef _RWLOCK_TYPE_H
@@ -7,6 +10,9 @@
 
 #include <list.h>
 #include <mutex.h>
+#include <cond.h>
+
+#define NO_ONE (-1)
 
 typedef struct rwlock {
 	list_t queue;
