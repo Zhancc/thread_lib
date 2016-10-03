@@ -26,10 +26,11 @@
 #include <malloc.h>         /* _malloc */
 #include <syscall.h>        /* swexn */
 #include <swexn_handler.h>  /* SWEXN_STACK_SIZE, ESP3_OFFSET */
+#include <asm_internals.h>
 
 extern void *esp3;
+extern void **_main_ebp;
 extern pagefault_handler_arg_t *root_thr_pagefault_arg;
-
 /**
  * @brief Installs the page fault handler.
  * @param stack_high Highest byte of the kernel allocated stack.
@@ -52,4 +53,6 @@ install_autostack(void *stack_high, void *stack_low)
     
     /* TODO check for return status */
     swexn(esp3, swexn_handler, (void *)root_thr_pagefault_arg, NULL);
+	_main_ebp = get_ebp();
+	_main_ebp = (void **)*_main_ebp;
 }

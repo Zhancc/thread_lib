@@ -11,6 +11,8 @@ typedef struct sem {
 	int cnt;
 	cond_t cv;
 	mutex_t cv_mutex;
+	int init_flag;
+	int waiting;
 } sem_t;
 
 #endif /* _SEM_TYPE_H */

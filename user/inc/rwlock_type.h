@@ -15,13 +15,14 @@
 #define NO_ONE (-1)
 
 typedef struct rwlock {
-    int current_holder;
-    int num_lock_holding_readers;
-    int num_waiting_readers;
-    int num_waiting_writers;
-    cond_t can_read;
-    cond_t can_write;
-    mutex_t data;
+	list_t queue;
+/* reader = 0: available 
+ * > 0: # of readers
+ * < 0: in exclusive state, and is -tid of the holder
+ * */
+	int reader;
+	mutex_t qr_mutex;
+	int init_flag;
 } rwlock_t;
 
 #endif /* _RWLOCK_TYPE_H */

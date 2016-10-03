@@ -62,33 +62,30 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory
 #
-410TESTS = actual_wait \
-		   agility_drill \
-		   beady_test \
-		   bistromath \
-		   cat \
-		   cvar_test \
-		   cyclone \
+410TESTS = paraguay\
+		   startle\
+		   getpid_test1\
+		   cyclone\
+		   join_specific_test\
+		   actual_wait\
+		   misbehave_wrap\
+		   stack_test1\
+		   cat\
+		   cvar_test\
 		   excellent \
-		   getpid_test1 \
-		   halt_test \
-           join_specific_test \
-           juggle \
-           largetest \
-           mandelbrot \
-           misbehave_wrap \
-           multitest \
-           mutex_destroy_test \
-           nibbles \
-		   paraguay \
-		   rwlock_downgrade_read_test \
-		   stack_test1 \
-		   startle \
-		   switzerland \
-		   thr_exit_join \
-		   wild_test1 
-
-###########################################################################
+		   wild_test1\
+		   switzerland\
+		   mutex_destroy_test\
+		   rwlock_downgrade_read_test\
+		   beady_test\
+		   bistromath\
+		   halt_test\
+		   largetest\
+		   mandelbrot\
+		   multitest\
+		   nibbles\
+		   racer
+##########################################################################d#
 # Test programs you have written which you wish to run
 ###########################################################################
 # A list of the test programs you want compiled in from the user/progs
@@ -101,7 +98,7 @@ STUDENTTESTS = virgin life_cycle_test thread_management_test \
 # Object files for your thread library
 ###########################################################################
 THREAD_OBJS = malloc.o panic.o mutex.o asm.o cvar.o list.o thread.o \
-			  swexn_handler.o rwlock.o
+			  swexn_handler.o rwlock.o sem.o
 
 # Thread Group Library Support.
 #

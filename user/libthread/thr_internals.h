@@ -37,7 +37,7 @@ typedef struct _tcb {
  *
  * @return tid for invoking thread, 0 for peer thread.
  */
-int thread_fork_wrapper(void *esp);
+int thread_fork_wrapper(void *esp, tcb_t *tcb);
 
 /**
  * @brief New thread lands here after thr_create.
@@ -48,4 +48,11 @@ int thread_fork_wrapper(void *esp);
  * @param tcb_ptr Pointer to its own tcb.
  */
 void peer_thread_init(tcb_t *tcb);
+/**
+ * @brief get the tcb ptr
+ * we have arranged the stack in such a way  that the field below the return
+ * address default_exit_entry is tcb ptr
+ * @return return the tcb ptr. panic if failed
+ */
+tcb_t *get_tcb();
 #endif /* THR_INTERNALS_H */

@@ -18,7 +18,11 @@
                                peer_thread_init */
 #include <swexn_handler.h>  /* pagefault_handler_arg_t,  */
 #include <list.h>           /* list_t */
+#include <asm_internals.h>
 
+#include <simics.h>
+
+void **_main_ebp;
 
 extern pagefault_handler_arg_t *root_thr_pagefault_arg;
 
@@ -39,14 +43,9 @@ peer_thr_swexn_handler(void *arg, ureg_t *ureg)
     task_vanish(-1);
 }
 
-/**
- * @brief 
- * TODO I am not sure if this is the right behavior because the handout says
- * "should be the same as if the function had called thr_exit() specifying
- * the return value from the thread's body function. "
- */
-static void default_exit() {
-    thr_exit(0);
+void default_exit(void *ret){
+	set_status((int)ret);
+	thr_exit(ret);
 }
 
 /**
@@ -77,6 +76,7 @@ void peer_thread_init(tcb_t *tcb_ptr) {
  * @return 0 on success, negative number on error.
  */
 int thr_init(unsigned int size) {
+	void **ebp;
 	if(cond_init(&gstate.tcb_cv) < 0)
 		return -1;
 	if(mutex_init(&gstate.tcb_lock) < 0)
@@ -103,6 +103,14 @@ int thr_init(unsigned int size) {
 	list_init(&root_tcb->tcb_entry);
 	list_add_tail(&gstate.tcb_list, &root_tcb->tcb_entry);
 
+	/* auto return to thr_exit for root thread */
+	ebp = get_ebp();
+	ebp = (void **)*ebp;
+	while( ((void **)*ebp) != _main_ebp)
+		ebp = *ebp;
+	*(ebp++) = root_tcb;
+	*(ebp) = default_exit_entry;
+	
 	return 0;
 }
 
@@ -184,14 +192,14 @@ int thr_create(void *(*func)(void *), void *args) {
 	peer_thr_esp -= 4;
 	*(void **)peer_thr_esp = (void *)args;
 	peer_thr_esp -= 4;
-	*(void **)peer_thr_esp = (void *)default_exit;
+	*(void **)peer_thr_esp = (void *)default_exit_entry;
 	peer_thr_esp -= 4;
 	*(void **)peer_thr_esp = (void *)func;
 	peer_thr_esp -= 4;
 	*(tcb_t **)peer_thr_esp = peer_thr_tcb;
 
     /* Trap into the system call */
-	peer_thr_tid = thread_fork_wrapper(peer_thr_esp);
+	peer_thr_tid = thread_fork_wrapper(peer_thr_esp, peer_thr_tcb);
 	if(peer_thr_tid < 0){
 		free(peer_thr_stack_low);
 		return -3;
@@ -279,13 +287,13 @@ out:
  *               freeing the whole stack.
  */
 void thr_exit(void *status) {
-	int tid = gettid();
-	tcb_t *tcb;
-	list_ptr entry;
+	tcb_t *tcb = get_tcb();
+	//list_ptr entry;
     
     /* Locate its own TCB as this function could be called anywhere */
-    entry = &gstate.tcb_list;
+    //entry = &gstate.tcb_list;
 	mutex_lock(&gstate.tcb_lock);
+#if 0
 	for(entry = entry->next; entry != &gstate.tcb_list; entry = entry->next){
 		tcb = LIST_ENTRY(entry, tcb_t, tcb_entry);
 		if(tcb->tid == tid){
@@ -293,6 +301,7 @@ void thr_exit(void *status) {
 		}
 		tcb = NULL;
 	}
+#endif
 	assert(tcb != NULL);
 
 	tcb->ret = status;
@@ -311,7 +320,7 @@ void thr_exit(void *status) {
  * @return tid of invoking thread.
  */
 int thr_getid(void){
-	return gettid();
+	return get_tcb()->tid;
 }
 
 /**
@@ -323,4 +332,18 @@ int thr_getid(void){
  */
 int thr_yield(int tid){
 	return yield(tid);
+}
+
+/**
+ * @brief get the tcb ptr
+ * we have arranged the stack in such a way  that the field below the return 
+ * address default_exit_entry is tcb ptr
+ * @return return the tcb ptr. panic if failed
+ */
+tcb_t *get_tcb(){
+	void **ebp = get_ebp();
+	while( *(ebp + 1) != default_exit_entry ){
+		ebp = *ebp;
+	}
+	return *(tcb_t **)ebp;
 }

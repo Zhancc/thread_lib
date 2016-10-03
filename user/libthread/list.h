@@ -113,4 +113,10 @@ list_ptr list_remv_head(list_ptr l);
  */
 void list_add_tail(list_ptr l, list_ptr entry);
 
+/**
+ * @brief check if the list is empty
+ * @param l pointert to the header of the list
+ * @return if empty, return 0
+ */
+int list_empty(list_ptr l);
 #endif /* _LIST_H_ */

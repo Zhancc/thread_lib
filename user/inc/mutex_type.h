@@ -15,6 +15,7 @@
 typedef struct mutex {
     volatile int next;  /* The ticket a newcomer takes */
     volatile int owner; /* The "Now Serving" number */
+	int locked_flag;
 } mutex_t;
 
 #endif /* _MUTEX_TYPE_H */

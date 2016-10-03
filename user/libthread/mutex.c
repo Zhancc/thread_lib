@@ -18,7 +18,7 @@
 #include <mutex.h>      
 #include <syscall.h>        /* yield */
 #include <mutex_type.h>     /* mutex_t */
-
+#include <assert.h>
 /* Private APIs */
 #include <asm_internals.h>  /* atomic_inc */
 
@@ -33,6 +33,7 @@ int mutex_init(mutex_t *mp) {
     if (!mp)
         return -1;
 	mp->next = mp->owner = 0;
+	mp->locked_flag = 0;
 	return 0;
 }
 
@@ -49,6 +50,8 @@ int mutex_init(mutex_t *mp) {
  * @param mp Pointer to initialized mutex object.
  */
 void mutex_destroy(mutex_t *mp) {
+	assert(mp->owner == mp->next);
+	assert(mp->locked_flag == 0); // this line seems to be verbose
 	return;
 }
 
@@ -64,6 +67,7 @@ void mutex_lock(mutex_t *mp) {
 	while (ticket != mp->owner) {
 		yield(-1);
 	}
+	mp->locked_flag = 1;
 }
 
 /**
@@ -74,6 +78,8 @@ void mutex_lock(mutex_t *mp) {
  * @param mp Pointer to initialized mutex object.
  */
 void mutex_unlock(mutex_t *mp) {
+	assert(mp->locked_flag);
+	mp->locked_flag = 0;
 	mp->owner++;
 	return;
 }

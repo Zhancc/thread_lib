@@ -10,6 +10,8 @@
 .globl thread_fork_wrapper
 .globl xchg
 .globl cmpxchg
+.globl default_exit_entry
+.globl get_ebp
 atomic_inc:
     MOV   0x4(%esp),%eax    /* int *m is stored at 0x4(%esp)*/
     MOV   $1,%ecx           /* We are using XADD source,destination.
@@ -24,13 +26,15 @@ thread_fork_wrapper:
     MOV   0x4(%esp),%ecx    /* %ecx is caller saved. We can use it as temp 
                                storage. void *peer_thread_esp is stored 
                                at 0x4(%esp) */
+	MOV   0x8(%esp),%edx
     INT   $THREAD_FORK_INT  /* Trap into Pebble's thread_fork */
     CMP   $0,%eax           /* The return value determines if we are in invoking
                                thread(none zero, new thread's tid) or the 
                                new thread(zero) */
     JNZ   .Return           /* Invoking thread skips next instruction and 
                                returns immediately */
-    MOV  %ecx, %esp            
+    MOV  %ecx, %esp    
+	MOV  %edx, %ebp        
     CALL  peer_thread_init
     ADD   $4,%esp           /* Reclaims stack */
 .Return:
@@ -54,4 +58,15 @@ cmpxchg:
 	movl $0, %eax
 	ret
 1:	movl $1, %eax
+	ret
+
+default_exit_entry:
+	pushl %eax
+	pushl $default_exit_entry // fake return address, we shouldn't come back anyway
+	jmp default_exit
+1:
+	jmp 1b
+
+get_ebp:
+	movl %ebp, %eax
 	ret
