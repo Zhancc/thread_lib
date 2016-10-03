@@ -22,7 +22,7 @@ readfile:
   PUSH  0xc(%ebp)       /* buf */
   PUSH  0x8(%ebp)       /* filename */
   MOV   %esp,%esi       /* Move address of the "system call packet" into %esi */
-  INT   $READLINE_INT   /* Trap into kernel's readline, return value in %eax */
+  INT   $READFILE_INT   /* Trap into kernel's readfile, return value in %eax */
   LEA   0x10(%esp),%esp /* Reclaim the stack */
   POP   %esi            /* Restore %esi */
   POP   %ebp            /* Restore %ebp */
