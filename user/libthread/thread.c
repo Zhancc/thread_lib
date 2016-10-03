@@ -266,10 +266,10 @@ out:
  */
 void thr_exit(void *status) {
 	tcb_t *tcb = get_tcb();
-	list_ptr entry;
+	//list_ptr entry;
     
     /* Locate its own TCB as this function could be called anywhere */
-    entry = &gstate.tcb_list;
+    //entry = &gstate.tcb_list;
 	mutex_lock(&gstate.tcb_lock);
 #if 0
 	for(entry = entry->next; entry != &gstate.tcb_list; entry = entry->next){
@@ -320,8 +320,8 @@ int thr_yield(int tid){
  */
 tcb_t *get_tcb(){
 	void **ebp = get_ebp();
-	ebp = *ebp;
-	while( *(ebp + 1) != default_exit_entry )
+	while( *(ebp + 1) != default_exit_entry ){
 		ebp = *ebp;
+	}
 	return *(tcb_t **)ebp;
 }

@@ -62,7 +62,8 @@ cmpxchg:
 
 default_exit_entry:
 	pushl %eax
-	call default_exit
+	pushl $default_exit_entry // fake return address, we shouldn't come back anyway
+	jmp default_exit
 1:
 	jmp 1b
 

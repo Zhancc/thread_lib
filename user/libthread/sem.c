@@ -1,12 +1,18 @@
 #include <sem.h>
 #include <sem_type.h>
+#include <cond.h>
+#include <assert.h>
+#include <mutex.h>
 
 int sem_init( sem_t *sem, int count ){
 	sem->cnt = count;
 	sem->init_flag = 1;
 	sem->waiting = 0;
-	cond_init(&sem->cv);
-	mutex_init(&sem->cv_mutex);
+	if(cond_init(&sem->cv) < 0 )
+		return -2;
+	if(mutex_init(&sem->cv_mutex) < 0)
+		return -1;
+	return 0;
 }
 
 void sem_wait( sem_t *sem ){
