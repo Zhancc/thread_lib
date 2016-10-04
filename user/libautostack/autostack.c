@@ -43,7 +43,7 @@ install_autostack(void *stack_high, void *stack_low)
 {
     /* Make room for the exception handler stack, never freed. At this point
      * we are still single threaded */
-    esp3 = _malloc(SWEXN_STACK_SIZE + ESP3_OFFSET);
+    esp3 = malloc(SWEXN_STACK_SIZE + ESP3_OFFSET);
     if (!esp3)
         return;
 

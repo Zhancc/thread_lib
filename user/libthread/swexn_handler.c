@@ -75,9 +75,10 @@ swexn_handler(void *arg, ureg_t *ureg)
             address_offset = -address_offset;
         /* If the requested address is too far off, we don't treat it like a
          * regular stack growth. */
-        if (address_offset >= PAGE_SIZE)
-            address_ret = -1;
-        else
+        if (address_offset >= PAGE_SIZE) {
+            pagefault_ret = -4;
+            task_vanish(pagefault_ret);
+        } else
             pagefault_ret = pagefault(arg); 
     }
 
