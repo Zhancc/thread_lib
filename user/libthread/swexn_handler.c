@@ -66,10 +66,8 @@ void
 swexn_handler(void *arg, ureg_t *ureg)
 {
     int pagefault_ret = 0;
-
     if (ureg->cause == SWEXN_CAUSE_PAGEFAULT)
         pagefault_ret = pagefault(arg); 
-
     /* Only register the handler if there wasn't any problem in the
      * exception handling. Otherwise, let the kernel kill it next time the
      * exception happens. */

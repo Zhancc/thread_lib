@@ -37,6 +37,7 @@ extern pagefault_handler_arg_t *root_thr_pagefault_arg;
  * @param arg
  * @param ureg
  */
+
 static void
 peer_thr_swexn_handler(void *arg, ureg_t *ureg)
 {
@@ -62,7 +63,13 @@ struct {
 } gstate;
 
 void peer_thread_init(tcb_t *tcb_ptr) {
-	deschedule(&tcb_ptr->tid);
+	void *peer_thr_handler_esp3;
+    /* Register an exception handler that kills the task if any kind of
+ 	 * software exception is encountered. */
+    deschedule(&tcb_ptr->tid);
+    peer_thr_handler_esp3 = malloc(SWEXN_STACK_SIZE + ESP3_OFFSET);
+    if (swexn(peer_thr_handler_esp3, peer_thr_swexn_handler, NULL, NULL) < 0)
+        thr_exit((void *)-1);
 }
 
 /**
@@ -157,8 +164,7 @@ int thr_init(unsigned int size) {
 int thr_create(void *(*func)(void *), void *args) {
     unsigned int peer_thr_stack_size;
     int peer_thr_tid;
-    void *peer_thr_stack_low, *peer_thr_stack_high, *peer_thr_esp,
-         *peer_thr_handler_esp3;
+    void *peer_thr_stack_low, *peer_thr_stack_high, *peer_thr_esp;
     tcb_t *peer_thr_tcb;
 
     /* It is nice to allocate multiples of PAGE_SIZE amount of memory */
@@ -204,12 +210,6 @@ int thr_create(void *(*func)(void *), void *args) {
 		free(peer_thr_stack_low);
 		return -3;
 	}
-
-    /* Register an exception handler that kills the task if any kind of
-     * software exception is encountered. */
-    peer_thr_handler_esp3 = malloc(SWEXN_STACK_SIZE + ESP3_OFFSET);
-    if (swexn(peer_thr_handler_esp3, peer_thr_swexn_handler, NULL, NULL) < 0)
-        return -4;
 
     /* Populate the tid field of the peer threat's TCB and insert it into the
      * list */
