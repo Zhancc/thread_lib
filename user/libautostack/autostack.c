@@ -20,7 +20,8 @@
  *     |        |
  *     |        |
  *
- * @author X.D. Zhai (xingdaz), Zhan Chan (zhanc1)
+ * @author X.D. Zhai (xingdaz)
+ * @author Zhan Chan (zhanc1)
  */
 
 #include <malloc.h>         /* _malloc */
@@ -31,6 +32,7 @@
 extern void *esp3;
 extern void **_main_ebp;
 extern pagefault_handler_arg_t *root_thr_pagefault_arg;
+
 /**
  * @brief Installs the page fault handler.
  * @param stack_high Highest byte of the kernel allocated stack.

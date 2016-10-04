@@ -5,7 +5,8 @@
  * TODO create other handlers to handle other exceptions and untimely deaths
  * of threads and recover from there.
  *
- * @author X.D. Zhai (xingdaz), Zhan Chan (zhanc1)
+ * @author X.D. Zhai (xingdaz)
+ * @author Zhan Chan (zhanc1)
  */
 #include <swexn_handler.h> 
 #include <malloc.h>         /* _malloc */
@@ -66,9 +67,19 @@ void
 swexn_handler(void *arg, ureg_t *ureg)
 {
     int pagefault_ret = 0;
-
-    if (ureg->cause == SWEXN_CAUSE_PAGEFAULT)
-        pagefault_ret = pagefault(arg); 
+    int address_offset;
+    if (ureg->cause == SWEXN_CAUSE_PAGEFAULT) {
+        /* Sanity check the fault address */
+        address_offset = ureg->cr2 - ureg->esp;
+        if (address_offset < 0)
+            address_offset = -address_offset;
+        /* If the requested address is too far off, we don't treat it like a
+         * regular stack growth. */
+        if (address_offset >= PAGE_SIZE)
+            address_ret = -1;
+        else
+            pagefault_ret = pagefault(arg); 
+    }
 
     /* Only register the handler if there wasn't any problem in the
      * exception handling. Otherwise, let the kernel kill it next time the

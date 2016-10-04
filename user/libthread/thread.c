@@ -1,7 +1,8 @@
 /**
  * @file thread.c
  * @brief Implementions of the thread APIs specified in 410user/inc/thread.h
- * @author Zhan Chan (zhanc1), X.D. Zhai (xingdaz)
+ * @author Zhan Chan (zhanc1)
+ * @author X.D. Zhai (xingdaz)
  */
 
 /* Public APIs */
@@ -29,7 +30,7 @@ extern pagefault_handler_arg_t *root_thr_pagefault_arg;
 /**
  * @brief Exception handler for each peer thread.
  *
- * Any kind of software exception will call the whole task to vanish. The error 
+ * Any kind of software exception will cause the whole task to vanish. The error 
  * is, most of the time, irrecoverable b/c the thread could be holding locks, 
  * in the middle of modifying shared data structure or working on to produce a 
  * result that other thread may be depending on. 
@@ -40,7 +41,7 @@ extern pagefault_handler_arg_t *root_thr_pagefault_arg;
 static void
 peer_thr_swexn_handler(void *arg, ureg_t *ureg)
 {
-    task_vanish(-1);
+  task_vanish(-1);
 }
 
 void default_exit(void *ret){
@@ -310,7 +311,7 @@ void thr_exit(void *status) {
 		cond_signal(&tcb->exited);
 	}
 	mutex_unlock(&gstate.tcb_lock);
-    /* Housekeeping */
+  /* Housekeeping */
 	vanish();
 }
 
