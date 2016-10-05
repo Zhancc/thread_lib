@@ -28,6 +28,29 @@ static int thread_safe = 0;
 
 #define THREAD_SAFE_EXIT mutex_unlock(&big_lock)
 
+
+/* malloc two objects simultaneously, return negative in case any of them fails */
+int double_malloc(void **dest1, size_t __size1, void **dest2, size_t __size2){
+	void *ret1, *ret2;
+	int ret = 0;
+	THREAD_SAFE_ENTRY;
+	ret1 = _malloc(__size1);
+	if(ret1 != NULL){
+		ret2 = _malloc(__size2);
+		if(ret2 != NULL){
+			*dest1 = ret1;
+			*dest2 = ret2;
+		}else{
+			_free(ret1);
+			ret = -2;
+		}
+	}else{
+		ret = -1;
+	}
+	THREAD_SAFE_EXIT;
+	return ret;
+}
+
 void *malloc(size_t __size)
 {
   void *ret;

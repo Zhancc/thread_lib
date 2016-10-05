@@ -20,7 +20,7 @@
 #include <swexn_handler.h>  /* pagefault_handler_arg_t,  */
 #include <list.h>           /* list_t */
 #include <asm_internals.h>
-
+#include <malloc_internals.h>
 #include <simics.h>
 
 void **_main_ebp;
@@ -169,17 +169,14 @@ int thr_create(void *(*func)(void *), void *args) {
     tcb_t *peer_thr_tcb;
 
     /* It is nice to allocate multiples of PAGE_SIZE amount of memory */
-	peer_thr_stack_size = (gstate.stack_size + sizeof(tcb_t) + PAGE_SIZE - 1) / 
+	peer_thr_stack_size = (gstate.stack_size + PAGE_SIZE - 1) / 
                           (PAGE_SIZE) * PAGE_SIZE;
-	peer_thr_stack_low = malloc(peer_thr_stack_size);
-	if(!peer_thr_stack_low)
-	    return -1;
+	if(double_malloc((void *)&peer_thr_stack_low, peer_thr_stack_size, (void*)&peer_thr_tcb, sizeof(tcb_t)) < 0)
+		return -1;
 
-    /* Put the thread's TCB on top of the stack */
-	peer_thr_tcb = peer_thr_stack_low + peer_thr_stack_size - sizeof(tcb_t);
     /* Peer thread's %esp has to be 4 byte aligned */
 	peer_thr_stack_high = 
-                    (void *)((unsigned int)peer_thr_tcb & (unsigned int)~0x3);
+                    (void *)((unsigned int)(peer_thr_stack_low + peer_thr_stack_size) & (unsigned int)~0x3);
 	peer_thr_esp = peer_thr_stack_high;
 
 	/* Populate peer threat's TCB */
@@ -209,6 +206,7 @@ int thr_create(void *(*func)(void *), void *args) {
 	peer_thr_tid = thread_fork_wrapper(peer_thr_esp, peer_thr_tcb);
 	if(peer_thr_tid < 0){
 		free(peer_thr_stack_low);
+		free(peer_thr_tcb);
 		return -3;
 	}
 
@@ -273,7 +271,7 @@ int thr_join(int tid, void **statusp) {
 
     /* Housekeeping */
 	list_remv(entry);
-	free(tcb->stack_low);
+	free(tcb);
 
 out:
 	mutex_unlock(&gstate.tcb_lock);
@@ -311,6 +309,8 @@ void thr_exit(void *status) {
 		cond_signal(&tcb->exited);
 	}
 	mutex_unlock(&gstate.tcb_lock);
+	if(tcb != tcb->stack_low)
+		free(tcb->stack_low);
   /* Housekeeping */
 	vanish();
 }
