@@ -42,7 +42,7 @@ extern pagefault_handler_arg_t *root_thr_pagefault_arg;
 static void
 peer_thr_swexn_handler(void *arg, ureg_t *ureg)
 {
-  task_vanish(-1);
+	panic("Panic\n");
 }
 
 void default_exit(void *ret){
