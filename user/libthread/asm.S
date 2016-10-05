@@ -1,7 +1,8 @@
 /**
  * @file asm.S
  * @brief Assembly utility functions.
- * @author Zhan Chan (zhanc1), X.D. Zhai (xingdaz)
+ * @author Zhan Chan (zhanc1)
+ * @author X.D. Zhai (xingdaz)
  */
 
 #include <syscall_int.h>
@@ -12,6 +13,7 @@
 .globl cmpxchg
 .globl default_exit_entry
 .globl get_ebp
+
 atomic_inc:
     MOV   0x4(%esp),%eax    /* int *m is stored at 0x4(%esp)*/
     MOV   $1,%ecx           /* We are using XADD source,destination.
@@ -26,23 +28,23 @@ thread_fork_wrapper:
     MOV   0x4(%esp),%ecx    /* %ecx is caller saved. We can use it as temp 
                                storage. void *peer_thread_esp is stored 
                                at 0x4(%esp) */
-	MOV   0x8(%esp),%edx
+    MOV   0x8(%esp),%edx
     INT   $THREAD_FORK_INT  /* Trap into Pebble's thread_fork */
     CMP   $0,%eax           /* The return value determines if we are in invoking
                                thread(none zero, new thread's tid) or the 
                                new thread(zero) */
     JNZ   .Return           /* Invoking thread skips next instruction and 
                                returns immediately */
-    MOV  %ecx, %esp    
-	MOV  %edx, %ebp        
+    MOV   %ecx, %esp    
+	  MOV   %edx, %ebp        
     CALL  peer_thread_init
     ADD   $4,%esp           /* Reclaims stack */
 .Return:
     RET                     /* This is equivalent to POP %eip.
                                In invoking thread, new thread's tid is returned 
                                unchanged. In new thread, its %eip is overwritten
-                               by the value, i.e. address of first instruction of 
-                               peer_thread_init, stored at %esp. */
+                               by the value, i.e. address of first instruction 
+                               of peer_thread_init, stored at %esp. */
 xchg:
     MOV   0x4(%esp),%ecx    /* source */
     MOV   0x8(%esp),%eax    /* delta */
@@ -50,23 +52,30 @@ xchg:
     RET
 
 cmpxchg:
-	movl 0x4(%esp), %ecx
-	movl 0x8(%esp), %eax
-	movl 0xc(%esp), %edx
-	lock cmpxchgl %edx, (%ecx)
-	jz 1f
-	movl $0, %eax
-	ret
-1:	movl $1, %eax
-	ret
+    MOV     0x4(%esp),%ecx  /* source */
+    MOV     0x8(%esp),%eax  /* test */
+    MOV     0xc(%esp),%edx  /* set */
+    LOCK   
+    CMPXCHG %edx,(%ecx)   /* %eax is an implicit operand.
+                             if (*source == test) {
+                               *source = set; ZF = 1;
+                             } else {
+                               %eax = *source; ZF = 0
+                             } */
+    JZ      .Equal
+    MOV     $0,%eax
+    RET
+.Equal:
+    MOV     $1,%eax
+    RET 
 
 default_exit_entry:
-	pushl %eax
-	pushl $default_exit_entry // fake return address, we shouldn't come back anyway
-	jmp default_exit
-1:
-	jmp 1b
+	  pushl %eax
+	  pushl $default_exit_entry // fake return address, we shouldn't come back anyway
+	  jmp default_exit
+1:  
+	  jmp 1b
 
 get_ebp:
-	movl %ebp, %eax
-	ret
+	  MOV %ebp,%eax
+	  RET 

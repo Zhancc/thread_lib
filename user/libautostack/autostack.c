@@ -20,7 +20,8 @@
  *     |        |
  *     |        |
  *
- * @author X.D. Zhai (xingdaz), Zhan Chan (zhanc1)
+ * @author X.D. Zhai (xingdaz)
+ * @author Zhan Chan (zhanc1)
  */
 
 #include <malloc.h>         /* _malloc */
@@ -31,6 +32,7 @@
 extern void *esp3;
 extern void **_main_ebp;
 extern pagefault_handler_arg_t *root_thr_pagefault_arg;
+
 /**
  * @brief Installs the page fault handler.
  * @param stack_high Highest byte of the kernel allocated stack.
@@ -46,7 +48,7 @@ install_autostack(void *stack_high, void *stack_low)
         return;
 
     /* Populate root thread pagefault handler argument */
-    root_thr_pagefault_arg = _malloc(sizeof(pagefault_handler_arg_t));
+    root_thr_pagefault_arg = malloc(sizeof(pagefault_handler_arg_t));
     root_thr_pagefault_arg->stack_high = stack_high;
     root_thr_pagefault_arg->stack_low = stack_low;
     root_thr_pagefault_arg->fixed_size = 0;

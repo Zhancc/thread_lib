@@ -27,21 +27,28 @@ int atomic_inc(volatile int *m);
 int xchg(int *source, int delta);
 
 /**
- * @brief Atomically compare the value at source and test, if equal,
- * set value pointed by source to set
+ * @brief Atomically compare the value at source and test, if equal, set value 
+ *        at source to set.
  *
- * @param source ptr to the source value
- * @param test the value to compare with
- * @param set the value to be set when equal
+ * @param source Pointer to the source value.
+ * @param test Test value to be compared with.
+ * @param set Target value to which source is set if source is equal to test.
  *
  * @return if equal, return positive; if not, return zero
  */
 int cmpxchg(int *source, int test, int set);
 
 /**
- * @brief default return point, which takes return value as argument to default_exit
+ * @brief default return point, which takes return value as argument to 
+ *        default_exit
  * @return should never return
  */
 void default_exit_entry();
-void** get_ebp();
+
+/**
+ * @brief Retrieves the current frame pointer  
+ *
+ * @return Address that holds the saved %ebp of the caller.
+ */
+void **get_ebp();
 #endif
