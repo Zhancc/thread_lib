@@ -35,7 +35,8 @@ pagefault(void *arg, ureg_t *ureg)
 {
     int new_pages_ret;
     void *new_stack_low;
-    unsigned int new_stack_size, stack_fixed_size;
+    unsigned int stack_fixed_size;
+	unsigned int old_stack_size;
     pagefault_handler_arg_t *stack_data;
 
 	/* make sure we can handle the page fault*/
@@ -49,13 +50,14 @@ pagefault(void *arg, ureg_t *ureg)
 		panic("segmentation fault!\n");
 	}	
 
+	old_stack_size = (char *)stack_data->stack_high - (char *)stack_data->stack_low;
     new_stack_low = (void *)((char *) stack_data->stack_low - STACK_EXTENSION);
-    new_stack_size = stack_data->stack_high - new_stack_low;
 
     /* Failure: Outgrown the declared stack. Single threaded application won't
      * run into this problem. */
-    if (stack_fixed_size != 0 && new_stack_size >= stack_fixed_size)
+    if (stack_fixed_size != 0 && old_stack_size >= stack_fixed_size)
         return -1;
+	new_stack_low = (void *)((char *) stack_data->stack_low - STACK_EXTENSION);
 
     new_pages_ret = new_pages(new_stack_low, STACK_EXTENSION);
     /* Failure: Can't allocate new pages. */
