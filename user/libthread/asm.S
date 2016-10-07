@@ -1,81 +1,76 @@
 /**
  * @file asm.S
- * @brief Assembly utility functions.
- * @author Zhan Chan (zhanc1)
+ * @brief Implementation of assembly utility functions defined in
+ *        asm_internals.h and thr_internals.h
+ * @author Zhan Chen (zhanc1)
  * @author X.D. Zhai (xingdaz)
  */
 
-#include <syscall_int.h>
+#include "syscall_int.h"
 
 .globl atomic_inc
-.globl thread_fork_wrapper
 .globl xchg
 .globl cmpxchg
+.globl thread_fork_wrapper
 .globl default_exit_entry
 .globl get_ebp
 
 atomic_inc:
-    MOV   0x4(%esp),%eax    /* int *m is stored at 0x4(%esp)*/
-    MOV   $1,%ecx           /* We are using XADD source,destination.
-                               source has to be a register, destination can be
-                               either register or memory location */
-    LOCK                    /* Atomic exchange and add */
-    XADD  %ecx,(%eax)       /* m++ atomically */
-    MOV   %ecx,%eax         /* Return m's old value. */
-    RET
+  movl      0x4(%esp),%eax    /* int *m */
+  movl      $1,%ecx
+  lock
+  xaddl     %ecx,(%eax)       /* *m++ atomically */
+  movl      %ecx,%eax         /* Return old value pointed to by m */
+  ret
 
-thread_fork_wrapper:
-    MOV   0x4(%esp),%ecx    /* %ecx is caller saved. We can use it as temp 
-                               storage. void *peer_thread_esp is stored 
-                               at 0x4(%esp) */
-    MOV   0x8(%esp),%edx
-    INT   $THREAD_FORK_INT  /* Trap into Pebble's thread_fork */
-    CMP   $0,%eax           /* The return value determines if we are in invoking
-                               thread(none zero, new thread's tid) or the 
-                               new thread(zero) */
-    JNZ   .Return           /* Invoking thread skips next instruction and 
-                               returns immediately */
-    MOV   %ecx, %esp    
-	  MOV   %edx, %ebp        
-    CALL  peer_thread_init
-    ADD   $4,%esp           /* Reclaims stack */
-.Return:
-    RET                     /* This is equivalent to POP %eip.
-                               In invoking thread, new thread's tid is returned 
-                               unchanged. In new thread, its %eip is overwritten
-                               by the value, i.e. address of first instruction 
-                               of peer_thread_init, stored at %esp. */
 xchg:
-    MOV   0x4(%esp),%ecx    /* source */
-    MOV   0x8(%esp),%eax    /* delta */
-    XCHG  (%ecx),%eax       /* Return the source value and swap in the delta */
-    RET
+  movl      0x4(%esp),%ecx    /* int *source */
+  movl      0x8(%esp),%eax    /* int delta */
+  xchgl     (%ecx),%eax       /* Swap values and return old content */
+  ret
 
 cmpxchg:
-    MOV     0x4(%esp),%ecx  /* source */
-    MOV     0x8(%esp),%eax  /* test */
-    MOV     0xc(%esp),%edx  /* set */
-    LOCK   
-    CMPXCHG %edx,(%ecx)   /* %eax is an implicit operand.
-                             if (*source == test) {
-                               *source = set; ZF = 1;
-                             } else {
-                               %eax = *source; ZF = 0
-                             } */
-    JZ      .Equal
-    MOV     $0,%eax
-    RET
+  movl      0x4(%esp),%ecx    /* int *source */
+  movl      0x8(%esp),%eax    /* int test */
+  movl      0xc(%esp),%edx    /* int set */
+  lock
+  cmpxchgl  %edx,(%ecx)       /* %eax is an implicit operand */
+  jz        .Equal
+  movl      $0,%eax
+  ret
 .Equal:
-    MOV     $1,%eax
-    RET 
+  movl     $1,%eax
+  ret 
+
+/* Please refer to thread.c for play by play stack diagram. */
+thread_fork_wrapper:
+  movl      0x4(%esp),%ecx    /* void *esp */
+  movl      0x8(%esp),%edx    /* tcb_t *tcb */
+  int       $THREAD_FORK_INT  /* Trap into thread_fork */
+  cmpl      $0,%eax           /* The return value determines if we are in 
+                                 invoking thread(new thread's tid) or the new 
+                                 thread(zero). */
+  jnz       .Return           /* Invoking thread returns immediately */
+  movl      %edx,%ebp         /* Frame pointer at start of TCB */
+  movl      %ecx,%esp         /* Replace invoking thread's %esp w/ esp */
+  call      peer_thread_init
+  addl      $4,%esp           /* Reclaims stack, %esp points to func */
+.Return:  
+  ret                         /* This is equivalent to 
+                                    pop %eip.
+                                 In invoking thread, new thread's tid is 
+                                 returned unchanged. In new thread, its %eip is 
+                                 overwritten by the address of first 
+                                 instruction of peer_thread_init, stored at
+                                 %esp. */
 
 default_exit_entry:
-	  pushl %eax
-	  pushl $default_exit_entry // fake return address, we shouldn't come back anyway
-	  jmp default_exit
-1:  
-	  jmp 1b
+	pushl     %eax                /* Return value of thread's body func */
+	pushl     $default_exit_entry /* Placeholder for return address. */
+	jmp       default_exit
+1:                              /* Boy you are in trouble if you get here */ 
+	jmp 1b
 
 get_ebp:
-	  MOV %ebp,%eax
-	  RET 
+	movl     %ebp,%eax          /* Store calling function's %ebp */
+	ret 

@@ -1,10 +1,138 @@
 /**
 
-@mainpage 15-410 Project 2
+@mainpage 15-410/605 Project 2
 
 @author Zhan Chen (zhanc1)
 @author Xingda Zhai (xingdaz)
 
-Same drill as last time.
+Overview
+========
+This repository comprises implementations of synchronization primitives and 
+a user level thread library for the Pebbles kernel of CMU's 15-410/605. 
+It presents the familiar POSIX `pthread` types and interfaces such as 
+`pthread_t`, `pthread_mutex_t`, and their associated methods. Apart from the 
+aforementioned content, included in this repo are also system call headers and 
+a binary reference implementation of the Pebbles kernel.
 
+Key Components
+==============
+Below is a list of building components that made up the library, ordered from
+the simplest and most basic, to higher constructs that rely on the previous
+level.
+
+Atomic Operations
+-----------------
+Lock requires OS support and OS needs hardware support. Hence, the lowest
+building block of this whole edifice are atomic instructions such as `xadd`, 
+`xchg` and `cmpxchg`. Our mutex implementation is a plain vanilla ticket lock
+that uses atomic increment.
+
+Doubly Linked List
+------------------
+One can't build a conditional variable without a doubly linked list. Since we
+are building things from scratch here, we reinvented the wheel, with a twist.
+Instead of having data pointer in the node itself, we embedded the node in the
+data struct itself. More detail in `list.h` documentation.
+
+Synchronization Primitives
+--------------------------
+Building on atomic operations and doubly linked list, and OS support for
+`deschedule()`, `make_runnable()`, and `thread_fork`(wrapped), we implemented
+mutex and conditional variable fairly easily. Subsequently, semaphore was built
+on top of the former primitives.
+
+Thread
+------
+This user level library has to allocate and prepare the thread stack on the
+process's heap before calling the application provided function. In addition,
+it has to make sure each thread exits identically and their stack space gets
+reclaimed. Moreover, it has to be able to find each thread's stack space and
+their control block. Please refer to detailed documentation in `thread.c`
+
+Thread Software Exception Handlers
+---------------------------------
+A default exception handler is installed for each thread. In the case of any
+general protection violation, it is near impossible to rewind the clock and 
+recover the changes done to shared state. Hence, it is reasonable to just kill
+the whole process. 
+
+Thread Safe Malloc
+------------------
+System `malloc()` and its variants are wrapped to make them thread safe.
+
+Panic
+-----
+When a fault or error is irrecoverable, we kill the task with an error message.
+
+Code Organization
+=================
+`user/inc`
+----------
+It contains public header files with structure definition of mutex, conditional
+variable, semaphore and reader-writer lock.
+    cond_type.h
+    mutex_type.h
+    rwlock_type.h
+    sem_type.h
+
+`user/libthread` 
+----------------
+It contains headers and implementations of the following:
+1. Assembly level atomic and helper functions.
+    asm_internals.h
+    asm.S
+2. Doubly linked list data structure.
+    list.h 
+    list.c
+3. Synchronization primitives.
+    mutex.c
+    cvar.c
+    sem.c
+    rwlock.c
+4. User level thread library.
+    thr_internals.h
+    thread.c
+5. Software exception handler.
+    swexn_handler.h
+    swexn_handler.c
+6. Thread safe `malloc()`, its variants, and helper function.
+    malloc_internals.h
+    malloc.c
+7. Panic function.
+    panic.c
+
+`user/libautostack`
+-------------------
+It contains a single file that implements the stack growth function for single 
+threaded legacy software.
+    autostack.c
+
+`user/libsyscall`
+-----------------
+It constains singleton files, each one of which implements one system call stub 
+function.
+    deschedule.S
+    exec.S
+    fork.S
+    getchar.S
+    get_cursor_pos.S
+    get_ticks.S
+    gettid.S
+    halt.S
+    make_runnable.S
+    new_pages.S
+    print.S
+    readfile.S
+    readline.S
+    remove_pages.S
+    set_cursor_pos.S
+    set_status.S
+    set_term_color.S
+    sleep.S
+    swexn.S
+    syscall.c
+    task_vanish.S
+    vanish.S
+    wait.S
+    yield.S
 */

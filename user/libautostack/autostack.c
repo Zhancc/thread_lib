@@ -21,40 +21,45 @@
  *     |        |
  *
  * @author X.D. Zhai (xingdaz)
- * @author Zhan Chan (zhanc1)
+ * @author Zhan Chen (zhanc1)
  */
 
-#include <malloc.h>         /* _malloc */
-#include <syscall.h>        /* swexn */
-#include <swexn_handler.h>  /* SWEXN_STACK_SIZE, ESP3_OFFSET */
-#include <asm_internals.h>
-
-extern void *esp3;
-extern void **_main_ebp;
-extern pagefault_handler_arg_t *root_thr_pagefault_arg;
-
+#include <malloc.h>         /* malloc() */
+#include <syscall.h>        /* swexn() */
+#include "thr_internals.h"  /* _main_ebp */
+#include "swexn_handler.h"  /* SWEXN_STACK_SIZE, ESP3_OFFSET, 
+                               and root_swexn_handler() */
+#include <simics.h>
 /**
  * @brief Installs the page fault handler.
+ *
+ * If any of the system calls fails, we simply return. When pagefault happens,
+ * the kernel will kill the task.
+ *
  * @param stack_high Highest byte of the kernel allocated stack.
  * @param stack_low Lower byte of the kernel allocated stack. Grows downwards.
  */
-void
-install_autostack(void *stack_high, void *stack_low) 
+void install_autostack(void *stack_high, void *stack_low) 
 {
-    /* Make room for the exception handler stack, never freed. At this point
-     * we are still single threaded */
-    esp3 = malloc(SWEXN_STACK_SIZE + ESP3_OFFSET);
-    if (!esp3)
-        return;
+  /* Make room for the exception handler stack, never freed. At this point
+   * we are still single threaded */
+  if (!(root_esp3 = malloc(SWEXN_STACK_SIZE + ESP3_OFFSET)))
+    panic("memory_pressure\n");
+  /* Populate root thread pagefault handler argument */
+  if (!(root_pagefault_arg = malloc(sizeof(pagefault_handler_arg_t))))
+    panic("memory pressure\n");
 
-    /* Populate root thread pagefault handler argument */
-    root_thr_pagefault_arg = malloc(sizeof(pagefault_handler_arg_t));
-    root_thr_pagefault_arg->stack_high = stack_high;
-    root_thr_pagefault_arg->stack_low = stack_low;
-    root_thr_pagefault_arg->fixed_size = 0;
-    
-    /* TODO check for return status */
-    swexn(esp3, swexn_handler, (void *)root_thr_pagefault_arg, NULL);
-	_main_ebp = get_ebp();
-	_main_ebp = (void **)*_main_ebp;
+  root_pagefault_arg->stack_high = stack_high;
+  root_pagefault_arg->stack_low = stack_low;
+  root_pagefault_arg->fixed_size = 0;
+  
+  /* ureg is left as NULL to tell kernel it is the first registration. */
+  if (swexn(root_esp3, root_thr_swexn_handler, 
+            (void *) root_pagefault_arg, NULL))
+    panic("handler installation fail\n");
+
+  /* I say one last thing, let's remember _main()'s ebp for later use.
+   * It is used to overwrite main()'s return address. Detail in thread.c's 
+   * thr_init() documentation. */
+	_main_ebp = (void **) *get_ebp();
 }

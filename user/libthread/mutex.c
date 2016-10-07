@@ -9,50 +9,53 @@
  * Threads do not spin while waiting. Instead, they yield their CPU cycle until
  * woken up by the kernel.
  *
- * TODO should try to used deschedule() and make_runnable()
- *
- * @author Zhan Chan (zhanc1), X.D. Zhai (xingdaz)
+ * @author Zhan Chen (zhanc1)
+ * @author X.D. Zhai (xingdaz)
  */
 
 /* Public APIs and types */
 #include <mutex.h>      
 #include <syscall.h>        /* yield */
 #include <mutex_type.h>     /* mutex_t */
-#include <assert.h>
+#include <assert.h>         /* assert() */ 
+
 /* Private APIs */
-#include <asm_internals.h>  /* atomic_inc */
+#include "asm_internals.h"  /* atomic_inc, xchg*/
 
 /**
  * @brief Initialize the mutex object. 
  *
- * @param mp Pointer to allocated but unintialized mutex_t data.
+ * Behavior is undefined if called after the mutex has already been initialized
+ * or called while it is in use.
  *
+ * @param mp Pointer to allocated but unintialized mutex_t data.
  * @return 0 on success and negative number on error.
  */
-int mutex_init(mutex_t *mp) {
-    if (!mp)
-        return -1;
-	mp->next = mp->owner = 0;
-	mp->locked_flag = 0;
-	return 0;
+int mutex_init(mutex_t *mp) 
+{
+  if (!mp)
+    return -1;
+
+  mp->next = mp->owner = 0;
+  mp->locked = 0;
+  mp->init = 1;
+  return 0;
 }
 
 /**
  * @brief Deactives the mutex object.
  *
- * It is illegal use the mutex object after this function has been called. This
- * can't be called while some thread is holding the lock or trying to aquire it.
- * It is the application's responsibility to ensure legal usage.
- *
- * TODO this is unimplemented. Perhaps we should have a variable in mutex_t to 
- * indicate if it is active.
+ * We are making sure that the mutex is not in locked state and every thread
+ * that has asked for the lock has acquired the lock. Then we atomically set
+ * the init flag to 0.
  *
  * @param mp Pointer to initialized mutex object.
  */
 void mutex_destroy(mutex_t *mp) {
-	assert(mp->owner == mp->next);
-	assert(mp->locked_flag == 0); // this line seems to be verbose
-	return;
+  xchg(&(mp->init), 0);
+  assert(mp->owner == mp->next);
+  assert(mp->locked == 0);
+  return;
 }
 
 /**
@@ -63,23 +66,27 @@ void mutex_destroy(mutex_t *mp) {
  * @param mp Pointer to initialized mutex object.
  */
 void mutex_lock(mutex_t *mp) {
-	int ticket = atomic_inc(&(mp->next));
-	while (ticket != mp->owner) {
-		yield(-1);
-	}
-	mp->locked_flag = 1;
+  int ticket;
+  ticket = atomic_inc(&(mp->next));
+  assert(mp->init == 1);
+  while (ticket != mp->owner) {
+    yield(-1);
+  }
+  mp->locked = 1;
 }
 
 /**
  * @brief Indicates the end of the mutual exclusion region.
  *
- * Increament the "Now Serving" variable. 
+ * Increament the "Now Serving" variable. It is illegal for application 
+ * to unlock a mutex that is not locked. 
  *
  * @param mp Pointer to initialized mutex object.
  */
 void mutex_unlock(mutex_t *mp) {
-	assert(mp->locked_flag);
-	mp->locked_flag = 0;
-	mp->owner++;
-	return;
+  int old_lock = xchg(&(mp->locked), 0);
+  assert(mp->init == 1);
+  assert(old_lock == 1);
+  mp->owner++;
+  return;
 }

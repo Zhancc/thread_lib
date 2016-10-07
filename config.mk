@@ -62,29 +62,33 @@ UPDATE_METHOD = afs
 # A list of the test programs you want compiled in from the 410user/progs
 # directory
 #
-410TESTS = paraguay\
-		   startle\
-		   getpid_test1\
-		   cyclone\
-		   join_specific_test\
-		   actual_wait\
-		   misbehave_wrap\
-		   stack_test1\
-		   cat\
-		   cvar_test\
-		   excellent \
-		   wild_test1\
-		   switzerland\
-		   mutex_destroy_test\
-		   rwlock_downgrade_read_test\
-		   beady_test\
-		   bistromath\
-		   halt_test\
-		   largetest\
-		   mandelbrot\
-		   multitest\
-		   nibbles\
-		   racer
+410TESTS = actual_wait \
+					 agility_drill \
+					 beady_test \
+					 bistromath \
+					 cat \
+					 cvar_test \
+					 cyclone \
+					 excellent \
+					 getpid_test1 \
+					 halt_test \
+					 join_specific_test \
+					 juggle \
+					 largetest \
+					 mandelbrot \
+					 misbehave_wrap \
+					 multitest \
+					 mutex_destroy_test \
+					 nibbles \
+					 paraguay \
+					 racer \
+					 rwlock_downgrade_read_test \
+					 stack_test1 \
+					 startle \
+					 switzerland \
+					 thr_exit_join \
+					 wild_test1 
+
 ##########################################################################d#
 # Test programs you have written which you wish to run
 ###########################################################################
@@ -92,13 +96,13 @@ UPDATE_METHOD = afs
 # directory
 #
 STUDENTTESTS = virgin life_cycle_test thread_management_test \
-			   memory_management_test console_IO_test misc_test
+							 memory_management_test console_IO_test misc_test
 
 ###########################################################################
 # Object files for your thread library
 ###########################################################################
 THREAD_OBJS = malloc.o panic.o mutex.o asm.o cvar.o list.o thread.o \
-			  swexn_handler.o rwlock.o sem.o
+							swexn_handler.o rwlock.o sem.o
 
 # Thread Group Library Support.
 #
@@ -112,15 +116,14 @@ THREAD_OBJS = malloc.o panic.o mutex.o asm.o cvar.o list.o thread.o \
 # Object files for your syscall wrappers
 ###########################################################################
 SYSCALL_OBJS = syscall.o fork.o exec.o set_status.o vanish.o wait.o \
-			   task_vanish.o gettid.o yield.o deschedule.o make_runnable.o \
-			   get_ticks.o sleep.o swexn.o \
-			   new_pages.o remove_pages.o \
-			   getchar.o readline.o print.o set_term_color.o set_cursor_pos.o \
-			   get_cursor_pos.o \
-			   readfile.o halt.o
+							 task_vanish.o gettid.o yield.o deschedule.o make_runnable.o \
+							 get_ticks.o sleep.o swexn.o \
+							 new_pages.o remove_pages.o \
+							 getchar.o readline.o print.o set_term_color.o set_cursor_pos.o \
+							 get_cursor_pos.o \
+							 readfile.o halt.o
 
 ###########################################################################
 # Object files for your automatic stack handling
 ###########################################################################
 AUTOSTACK_OBJS = autostack.o
-

@@ -1,24 +1,15 @@
 /**
  * @file swexn_handler.c
- * @brief Implementations of thread library software exception handlers.
- *
- * TODO create other handlers to handle other exceptions and untimely deaths
- * of threads and recover from there.
- *
+ * @brief Implementations of thread library software exception handlers defined
+ *        in swexn_handler.h.
  * @author X.D. Zhai (xingdaz)
- * @author Zhan Chan (zhanc1)
+ * @author Zhan Chen (zhanc1)
  */
-#include <swexn_handler.h> 
-#include <malloc.h>         /* _malloc */
-#include <memlib.h>         /* mem_sbrk */
-#include <syscall.h>        /* swexn */
+#include <stdlib.h>         /* panic() */
+#include <syscall.h>        /* swexn() */
+#include <memlib.h>         /* set_brk() */
 #include <simics.h>
-
-/* Global pointer to ewexn handler's stack pointer */
-void *esp3;
-
-/* Global pointer to root thread's page fault handler argument */
-pagefault_handler_arg_t *root_thr_pagefault_arg;
+#include "swexn_handler.h"  /* pagefault_handler_arg_t */
 
 /**
  * @brief Page fault handler. 
@@ -30,59 +21,57 @@ pagefault_handler_arg_t *root_thr_pagefault_arg;
  * 
  * @param stack_low Pointer to current lowest byte of main thread stack.
  */
-static int
-pagefault(void *arg, ureg_t *ureg)
+static int pagefault(void *arg, ureg_t *ureg)
 {
-    int new_pages_ret;
-    void *new_stack_low;
-    unsigned int stack_fixed_size;
-	unsigned int old_stack_size;
-    pagefault_handler_arg_t *stack_data;
+  void *new_stack_low;
+  unsigned int stack_fixed_size, old_stack_size;
+  pagefault_handler_arg_t *root_stack_data;
 
-	/* make sure we can handle the page fault*/
-    stack_data = (pagefault_handler_arg_t *)arg;
-    stack_fixed_size = stack_data->fixed_size;
+	/* Make sure we can handle the page fault */
+  root_stack_data = (pagefault_handler_arg_t *) arg;
+  stack_fixed_size = root_stack_data->fixed_size;
 	
-	if(	ureg->error_code & 0x1 ||
-		ureg->cr2 >= (unsigned int)stack_data->stack_low || 
-		ureg->cr2 + PAGE_SIZE < (unsigned int)stack_data->stack_low){
-		/* if this is not a non-present fault, or faulting address is too high or too low*/
-		panic("segmentation fault!\n");
-	}	
+  /* Failure: non-present fault to indicate possible read/write privilege 
+   * violation, or faulting address not in reasonable range */
+	if (ureg->error_code & 0x1 ||
+      ureg->cr2 >= (unsigned int) root_stack_data->stack_low ||
+      MAX_OFFSET < (unsigned int) root_stack_data->stack_low - ureg->cr2) {
+    panic("Pagefault handler segmentation fault %p\n", (void *)ureg->cr2);
+  }
 
-	old_stack_size = (char *)stack_data->stack_high - (char *)stack_data->stack_low;
-    new_stack_low = (void *)((char *) stack_data->stack_low - STACK_EXTENSION);
+	old_stack_size = (char *) root_stack_data->stack_high - 
+                   (char *) root_stack_data->stack_low;
 
-    /* Failure: Outgrown the declared stack. Single threaded application won't
-     * run into this problem. */
-    if (stack_fixed_size != 0 && old_stack_size >= stack_fixed_size)
-        return -1;
-	new_stack_low = (void *)((char *) stack_data->stack_low - STACK_EXTENSION);
+  /* Failure: Outgrown the declared stack. Single threaded application won't
+   * run into this problem. Multi-threaded because in thr_init(),
+   * stack_fixed_size will be set to none zero. */
+  if (stack_fixed_size != 0 && old_stack_size >= stack_fixed_size)
+      return -2;
 
-    new_pages_ret = new_pages(new_stack_low, STACK_EXTENSION);
-    /* Failure: Can't allocate new pages. */
-    if (new_pages_ret < 0)
-        return -3;
+  new_stack_low = (void *)((char *) root_stack_data->stack_low - 
+                  STACK_EXTENSION);
+  /* Failure: Can't allocate new pages. */
+  if (new_pages(new_stack_low, STACK_EXTENSION) < 0)
+      return -3;
 
-    /* Sucess: Update global stack data */
-    stack_data->stack_low = new_stack_low;
-    return 0;
+  /* Sucess: Update global stack data */
+  root_stack_data->stack_low = new_stack_low;
+  return 0;
 }
 
-/* is this always the swe handler of root thread */
-void
-swexn_handler(void *arg, ureg_t *ureg)
+void root_thr_swexn_handler(void *arg, ureg_t *ureg) 
 {
-    int pagefault_ret = -1;
-    if (ureg->cause == SWEXN_CAUSE_PAGEFAULT) {
-    	pagefault_ret = pagefault(arg, ureg); 
-    }
-
-    /* Only register the handler if there wasn't any problem in the
-     * exception handling. Otherwise, let the kernel kill it next time the
-     * exception happens. */
-    if (pagefault_ret >= 0)
-        swexn(esp3, swexn_handler, arg, ureg);
+  /* Important: arg here is an opaque data type. When this handler was
+   * registered by install_autostack(), root_pagefault_arg was passed in. It 
+   * is a global variable, points to a pagefault_handler_arg_t on the heap. */
+  int pagefault_ret = -1;
+  if (ureg->cause == SWEXN_CAUSE_PAGEFAULT) {
+    pagefault_ret = pagefault(arg, ureg); 
+  }
+  /* Only register the handler again if there wasn't any problem in the
+   * exception handling. Otherwise, panic() */
+  if (pagefault_ret >= 0)
+    swexn(root_esp3, root_thr_swexn_handler, arg, ureg);
 	else
-		panic("Panic\n");
+		panic("Root thread pagefault handler exception.\n");
 }
