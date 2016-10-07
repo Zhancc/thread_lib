@@ -24,14 +24,14 @@ void **_main_ebp;
  * @brief Thread Control Block.
  */
 typedef struct _tcb {
-	int tid;            /* Thread ID returned by the kernel */
-	int status;         /* One of the above STATUS_x */
-	int joined;         /* Indicate if it has been joined by some thread */
-	cond_t exited;      /* Indicate if the peer thread has exited */
-	void *ret;          /* Pointer to address that holds return status */
-	list_t tcb_entry;   /* List entry used to find the previous and next tcb */
-	void *stack_high;   /* Limits of the stack */
-	void *stack_low;
+  int tid;            /* Thread ID returned by the kernel */
+  int status;         /* One of the above STATUS_x */
+  int joined;         /* Indicate if it has been joined by some thread */
+  cond_t exited;      /* Indicate if the peer thread has exited */
+  void *ret;          /* Pointer to address that holds return status */
+  list_t tcb_entry;   /* List entry used to find the previous and next tcb */
+  void *stack_high;   /* Limits of the stack */
+  void *stack_low;
 } tcb_t;
 
 /**

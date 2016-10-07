@@ -20,13 +20,13 @@
  *        argument
  */
 typedef struct pagefault_handler_arg {
-    void *stack_high;         /* Highest byte of the kernel allocated stack */
-    void *stack_low;          /* Lower byte of the stack, initialzed to kernel 
-                                 allocated low. Gets updated as newpages are 
-                                 alloccated */
-    unsigned int fixed_size;  /* Initialized to zero to indicate auto growth. 
-                                 None zero to inidcate thr_init() has been 
-                                 called and there is a limit to stack growth */
+  void *stack_high;         /* Highest byte of the kernel allocated stack */
+  void *stack_low;          /* Lower byte of the stack, initialzed to kernel 
+                               allocated low. Gets updated as newpages are 
+                               alloccated */
+  unsigned int fixed_size;  /* Initialized to zero to indicate auto growth. 
+                               None zero to inidcate thr_init() has been 
+                               called and there is a limit to stack growth */
 } pagefault_handler_arg_t;
 
 /* Global pointer to swexn handler's stack pointer */

@@ -12,10 +12,12 @@
 #include <asm_internals.h>  /* cmpxchg */
 #include <syscall.h>        /* yield */
 
-static mutex_t big_lock;  /* The big lock around all the following funcs */
+static mutex_t big_lock;    /* The big lock around all the following funcs */
 static int thread_safe = 0;
 
-/* TODO comment */
+/**
+ * @brief Acquire the big lock or yield to the thread holding onto the lock 
+ */
 inline static void thread_safe_entry()
 {
   int tid;
@@ -30,6 +32,9 @@ inline static void thread_safe_entry()
   mutex_lock(&big_lock);
 }
 
+/**
+ * @brief Release the lock and let others play.
+ */
 inline static void thread_safe_exit()
 {
   mutex_unlock(&big_lock);

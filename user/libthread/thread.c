@@ -129,7 +129,7 @@
  *          |   |ret value of func |
  *          |   --------------------
  *          |   |default_exit_entry|
-  *         |   --------------------
+ *          |   --------------------
  *          +---+--- saved %ebp    |
  *    mult.     -------------------- <-- %ebp <-- %esp
  *     of       |                  |
@@ -155,13 +155,13 @@
 
 /* Public APIs */
 #include <thread.h>
-#include <syscall.h>        /* PAGE_SIZE, swexn(), panic() */
-#include <stddef.h>         /* NULL */
-#include <assert.h>         /* assert() */
-#include <malloc.h>         /* malloc() */
-#include <cond.h>           /* cond_t, cond_wait(), and cond_signal() */
-#include <list.h>           /* list_t */
-#include <mutex.h>          /* mutex_t, mutex_lock(), and mutex_unlock() */
+#include <syscall.h>          /* PAGE_SIZE, swexn(), panic() */
+#include <stddef.h>           /* NULL */
+#include <assert.h>           /* assert() */
+#include <malloc.h>           /* malloc() */
+#include <cond.h>             /* cond_t, cond_wait(), and cond_signal() */
+#include <list.h>             /* list_t */
+#include <mutex.h>            /* mutex_t, mutex_lock(), and mutex_unlock() */
 
 /* Private APIs */
 #include "malloc_internals.h" /* double_malloc() */
@@ -173,9 +173,9 @@
  * @brief Global data structure root thread keeps.
  */
 struct {
-	unsigned int stack_size;  /* Declared stack size for each peer thread */
-	list_t tcb_list;          /* Dummy head into the list of TCB  */
-	mutex_t tcb_lock;         /* Lock to this data strucure */
+  unsigned int stack_size;  /* Declared stack size for each peer thread */
+  list_t tcb_list;          /* Dummy head into the list of TCB  */
+  mutex_t tcb_lock;         /* Lock to this data strucure */
   int root_tid;             /* Root thread's TID */
 } gstate;
 
@@ -192,7 +192,7 @@ struct {
  */
 static void peer_thr_swexn_handler(void *arg, ureg_t *ureg)
 {
-	panic("Peer thread encountered general protection fault.\n");
+  panic("Peer thread encountered general protection fault.\n");
 }
 
 /**
@@ -201,15 +201,15 @@ static void peer_thr_swexn_handler(void *arg, ureg_t *ureg)
  */
 static tcb_t *get_tcb() 
 {
-	void **ebp;
+  void **ebp;
   ebp = get_ebp();
 
   /* As long as we have not reached %ebp 4 byte below default_exit_entry */
-	while(*(ebp + 1) != default_exit_entry) {
-		ebp = *ebp;
-	}
+  while(*(ebp + 1) != default_exit_entry) {
+    ebp = *ebp;
+  }
 
-	return *(tcb_t **)ebp;
+  return *(tcb_t **)ebp;
 }
 
 /**
@@ -219,8 +219,8 @@ static tcb_t *get_tcb()
 void default_exit(void *ret)
 {
   /* set_status is only useful for root thread return */
-	set_status((int) ret);
-	thr_exit(ret);
+  set_status((int) ret);
+  thr_exit(ret);
 }
 
 /**
@@ -234,11 +234,11 @@ void default_exit(void *ret)
  * @param tcb Pointer to its TCB.
  */
 void peer_thread_init(tcb_t *tcb) {
-	void *handler_esp3;
+  void *handler_esp3;
   deschedule(&tcb->tid);
   handler_esp3 = malloc(SWEXN_STACK_SIZE + ESP3_OFFSET);
   if (swexn(handler_esp3, peer_thr_swexn_handler, NULL, NULL) < 0)
-      thr_exit((void *) -1);
+    thr_exit((void *) -1);
 }
 
 /**
@@ -308,20 +308,20 @@ void peer_thread_init(tcb_t *tcb) {
  * @return 0 on success, negative number on error.
  */
 int thr_init(unsigned int size) {
-	void **ebp;
+  void **ebp;
 
   /* Quit f***ing w/ me */
   if (!size)
     return -1;
-	if(mutex_init(&gstate.tcb_lock) < 0)
-		return -2;
-	gstate.stack_size = size;
-	list_init(&gstate.tcb_list);
+  if(mutex_init(&gstate.tcb_lock) < 0)
+    return -2;
+  gstate.stack_size = size;
+  list_init(&gstate.tcb_list);
 
   /* Insert the root thread's TCB into the list */
-	tcb_t *root_tcb = (tcb_t *) malloc(sizeof(tcb_t));
-	if(root_tcb == NULL)
-		return -3;
+  tcb_t *root_tcb = (tcb_t *) malloc(sizeof(tcb_t));
+  if(root_tcb == NULL)
+    return -3;
   if(cond_init(&root_tcb->exited) < 0)
     return -4;
 
@@ -329,23 +329,23 @@ int thr_init(unsigned int size) {
    * stack growth. */
   root_pagefault_arg->fixed_size = size;
 
-	root_tcb->tid = gettid();
+  root_tcb->tid = gettid();
   gstate.root_tid = root_tcb->tid;
-	root_tcb->joined = FALSE;
-	root_tcb->status = STATUS_RUNNING;
-	root_tcb->stack_low = root_tcb;
-	list_init(&root_tcb->tcb_entry);
-	list_add_tail(&gstate.tcb_list, &root_tcb->tcb_entry);
+  root_tcb->joined = FALSE;
+  root_tcb->status = STATUS_RUNNING;
+  root_tcb->stack_low = root_tcb;
+  list_init(&root_tcb->tcb_entry);
+  list_add_tail(&gstate.tcb_list, &root_tcb->tcb_entry);
 
   /* Overwrite root threat's return address and tcb address */
-	ebp = get_ebp();
-	ebp = (void **)*ebp;
-	while( ((void **)*ebp) != _main_ebp)
-		ebp = *ebp;
-	*(ebp++) = root_tcb;
-	*(ebp) = default_exit_entry;
-	
-	return 0;
+  ebp = get_ebp();
+  ebp = (void **)*ebp;
+  while( ((void **)*ebp) != _main_ebp)
+    ebp = *ebp;
+  *(ebp++) = root_tcb;
+  *(ebp) = default_exit_entry;
+
+  return 0;
 }
 
 /**
@@ -370,12 +370,12 @@ int thr_create(void *(*func)(void *), void *args) {
   /* Double malloc gurantees TCB will be on top of the stack cause they are
    * invoked in the same critical section. */
   if (double_malloc((void *) &stack_low, stack_size, 
-                    (void *) &thr_tcb, sizeof(tcb_t)) < 0)
+        (void *) &thr_tcb, sizeof(tcb_t)) < 0)
     return -2;
 
   /* Peer thread's %esp has to be 4 byte aligned */
   stack_high = (void *)((int) ((char *) stack_low + stack_size) & 
-                         STACK_ALIGNMENT_MASK);
+      STACK_ALIGNMENT_MASK);
   thr_esp = stack_high;
 
   /* Populate peer threat's TCB */
@@ -383,40 +383,40 @@ int thr_create(void *(*func)(void *), void *args) {
    * an indicator to see if it is safe to deschedule itself. */
   if (cond_init(&thr_tcb->exited) < 0)
     return -3;
-	thr_tcb->tid = 0; 
-	thr_tcb->status = STATUS_RUNNING;
-	thr_tcb->joined = FALSE;
-	list_init(&thr_tcb->tcb_entry);
-	thr_tcb->stack_high = stack_high;
-	thr_tcb->stack_low = stack_low;
-  
+  thr_tcb->tid = 0; 
+  thr_tcb->status = STATUS_RUNNING;
+  thr_tcb->joined = FALSE;
+  list_init(&thr_tcb->tcb_entry);
+  thr_tcb->stack_high = stack_high;
+  thr_tcb->stack_low = stack_low;
+
   /* Prepare the calling stack for thread_fork. */
-	thr_esp -= 4;
-	*(void **)thr_esp = (void *)args;
-	thr_esp -= 4;
-	*(void **)thr_esp = (void *)default_exit_entry;
-	thr_esp -= 4;
-	*(void **)thr_esp = (void *)func;
-	thr_esp -= 4;
-	*(tcb_t **)thr_esp = thr_tcb;
+  thr_esp -= 4;
+  *(void **)thr_esp = (void *)args;
+  thr_esp -= 4;
+  *(void **)thr_esp = (void *)default_exit_entry;
+  thr_esp -= 4;
+  *(void **)thr_esp = (void *)func;
+  thr_esp -= 4;
+  *(tcb_t **)thr_esp = thr_tcb;
 
   /* Trap into the system call */
-	thr_tid = thread_fork_wrapper(thr_esp, thr_tcb);
-	if(thr_tid < 0){
-		free(stack_low);
-		free(thr_tcb);
-		return -4;
-	}
+  thr_tid = thread_fork_wrapper(thr_esp, thr_tcb);
+  if(thr_tid < 0){
+    free(stack_low);
+    free(thr_tcb);
+    return -4;
+  }
 
   /* Populate the tid field of the peer threat's TCB and insert it into the
    * list */
-	assert(thr_tid != 0);
-	thr_tcb->tid = thr_tid;
-	mutex_lock(&gstate.tcb_lock);
-	list_add_tail(&gstate.tcb_list, &thr_tcb->tcb_entry);
-	mutex_unlock(&gstate.tcb_lock);
-	make_runnable(thr_tid);
-	return thr_tid;
+  assert(thr_tid != 0);
+  thr_tcb->tid = thr_tid;
+  mutex_lock(&gstate.tcb_lock);
+  list_add_tail(&gstate.tcb_list, &thr_tcb->tcb_entry);
+  mutex_unlock(&gstate.tcb_lock);
+  make_runnable(thr_tid);
+  return thr_tid;
 }
 
 /**
@@ -426,52 +426,52 @@ int thr_create(void *(*func)(void *), void *args) {
  * @return 
  */
 int thr_join(int tid, void **statusp) {
-	tcb_t *tcb;
-	list_ptr entry;
-	int ret;
+  tcb_t *tcb;
+  list_ptr entry;
+  int ret;
 
   entry = &gstate.tcb_list;
-	mutex_lock(&gstate.tcb_lock);
+  mutex_lock(&gstate.tcb_lock);
 
-	for (entry = entry->next; entry != &gstate.tcb_list; entry = entry->next) {
-		tcb = LIST_ENTRY(entry, tcb_t, tcb_entry);
-		if (tcb->tid == tid) {
-			break;
-		}
+  for (entry = entry->next; entry != &gstate.tcb_list; entry = entry->next) {
+    tcb = LIST_ENTRY(entry, tcb_t, tcb_entry);
+    if (tcb->tid == tid) {
+      break;
+    }
     /* Need to make sure that in the event that we haven't found the tid,
      * tcb is NULL */
-		tcb = NULL;
-	}
+    tcb = NULL;
+  }
 
   /* Failure: Haven't found it, go home */
-	if (!tcb) {
-		ret = -2;
-		goto Exit;
-	}
+  if (!tcb) {
+    ret = -2;
+    goto Exit;
+  }
 
   /* Failure: Some other thread have claimed this thread, go home */
-	if (tcb->joined == TRUE) {
-		ret = -1;
-		goto Exit;
-	}
+  if (tcb->joined == TRUE) {
+    ret = -1;
+    goto Exit;
+  }
 
   /* Success: We claim this thread */
-	tcb->joined = TRUE;
-	ret = 0;
-	while (tcb->status != STATUS_EXITED) {
-		cond_wait(&tcb->exited, &gstate.tcb_lock);
-	}
-  
+  tcb->joined = TRUE;
+  ret = 0;
+  while (tcb->status != STATUS_EXITED) {
+    cond_wait(&tcb->exited, &gstate.tcb_lock);
+  }
+
   if (statusp)
     *statusp = tcb->ret;
 
   /* Housekeeping */
-	list_remv(entry);
-	free(tcb);
+  list_remv(entry);
+  free(tcb);
 
 Exit:
-	mutex_unlock(&gstate.tcb_lock);
-	return ret;
+  mutex_unlock(&gstate.tcb_lock);
+  return ret;
 }
 
 /**
@@ -485,24 +485,24 @@ Exit:
  */
 void thr_exit(void *status)
 {
-	tcb_t *tcb = get_tcb();
+  tcb_t *tcb = get_tcb();
 
-	mutex_lock(&gstate.tcb_lock);
-	assert(tcb != NULL);
-	tcb->ret = status;
-	tcb->status = STATUS_EXITED;
-	if(tcb->joined == TRUE){
-		cond_signal(&tcb->exited);
-	}
-	mutex_unlock(&gstate.tcb_lock);
+  mutex_lock(&gstate.tcb_lock);
+  assert(tcb != NULL);
+  tcb->ret = status;
+  tcb->status = STATUS_EXITED;
+  if(tcb->joined == TRUE){
+    cond_signal(&tcb->exited);
+  }
+  mutex_unlock(&gstate.tcb_lock);
 
   /* Leave TCB alone because thr_join might be called later. Also, if root
    * thread gets here, we don't free its stack b/c it is not ours to free */
   if (tcb->tid != gstate.root_tid)
-		free(tcb->stack_low);
+    free(tcb->stack_low);
 
   /* Vanish thyself */
-	vanish();
+  vanish();
 }
 
 /**
@@ -511,7 +511,7 @@ void thr_exit(void *status)
  */
 int thr_getid(void) 
 {
-	return get_tcb()->tid;
+  return get_tcb()->tid;
 }
 
 /**
@@ -521,5 +521,5 @@ int thr_getid(void)
  */
 int thr_yield(int tid) 
 {
-	return yield(tid);
+  return yield(tid);
 }

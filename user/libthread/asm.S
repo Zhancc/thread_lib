@@ -68,9 +68,9 @@ default_exit_entry:
 	pushl     %eax                /* Return value of thread's body func */
 	pushl     $default_exit_entry /* Placeholder for return address. */
 	jmp       default_exit
-1:                              /* Boy you are in trouble if you get here */ 
+1:                                /* Boy you are in trouble if you get here */ 
 	jmp 1b
 
 get_ebp:
-	movl     %ebp,%eax          /* Store calling function's %ebp */
+	movl     %ebp,%eax            /* Store calling function's %ebp */
 	ret 

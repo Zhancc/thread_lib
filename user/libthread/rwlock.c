@@ -54,10 +54,12 @@ static void reader_lock(rwlock_t *rwlock, waiting_thr_data_t *waiting_data)
 {
   if (!list_empty(&rwlock->queue) || rwlock->holder < 0) {
     list_add_tail(&rwlock->queue, &waiting_data->list_entry);
+    mutex_unlock(&rwlock->data);
     deschedule(&waiting_data->about_to_be_runnable);
     return;
   } else {
     rwlock->holder++;
+    mutex_unlock(&rwlock->data);
     return;
   }
 }
@@ -75,10 +77,12 @@ static void writer_lock(rwlock_t *rwlock, waiting_thr_data_t *waiting_data)
 {
   if (!list_empty(&rwlock->queue) || rwlock->holder != 0) {
     list_add_tail(&rwlock->queue, &waiting_data->list_entry);
+    mutex_unlock(&rwlock->data);
     deschedule(&waiting_data->about_to_be_runnable);
     return;
   } else {
     rwlock->holder = -waiting_data->tid;
+    mutex_unlock(&rwlock->data);
     return;
   }
 }
@@ -103,7 +107,6 @@ void rwlock_lock(rwlock_t *rwlock, int type)
   } else {
     writer_lock(rwlock, &data);
   }
-  mutex_unlock(&rwlock->data);
 }
 
 /**

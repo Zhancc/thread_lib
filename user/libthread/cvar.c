@@ -81,8 +81,6 @@ void cond_wait(cond_t *cv, mutex_t *mp) {
    * is no longer in the queue. */
   mutex_lock(&cv->qmutex);
   assert(cv->init);
-//  assert(mp->init);
-//  assert(mp->locked);
   list_add_tail(&cv->queue, &data.list_entry);
   mutex_unlock(mp);
   mutex_unlock(&cv->qmutex);
